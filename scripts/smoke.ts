@@ -7,8 +7,10 @@ if (!['127.0.0.1', 'localhost'].includes(url.hostname)) throw new Error('Smoke t
 const db = getDatabase();
 let id: number | undefined;
 try {
-  const summary = await getSummary(db);
+  const summary = await getSummary({}, db);
   if (summary.employeeCount < 10_000) throw new Error(`Expected at least 10,000 employees, found ${summary.employeeCount}`);
+  const usSummary = await getSummary({ country: 'US' }, db);
+  if (usSummary.employeeCount !== 2_000 || usSummary.byCurrency.length !== 1) throw new Error('Filtered summary failed');
   const list = await listEmployees({ q: 'employee1', pageSize: 2 }, db);
   if (list.total < 1 || list.items.length !== 2) throw new Error('Filtered pagination failed');
   const created = await createEmployee({

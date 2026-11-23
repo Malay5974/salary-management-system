@@ -1,17 +1,20 @@
 import type { Database } from '../db/connection';
 import { getDatabase } from '../db/connection';
 import { listSalaryRows } from '../employees/repository';
+import { summaryInput } from '../../lib/validation';
+import { z } from 'zod';
 
 type SalaryRow = { country: string; department: string; currency: string; salaryMinor: string };
-type Group = { count: number; medianMinor: number; payrollMinor?: number; currency: string; country?: string; department?: string; band?: string };
+type Group = { count: number; medianMinor: number; minMinor: number; maxMinor: number; payrollMinor?: number; currency: string; country?: string; department?: string; band?: string };
 function median(values: number[]) {
   const ordered = values.sort((a, b) => a - b);
   const middle = Math.floor(ordered.length / 2);
   return Math.round(ordered.length % 2 ? ordered[middle] : (ordered[middle - 1] + ordered[middle]) / 2);
 }
 
-export async function getSummary(db: Database = getDatabase()) {
-  const rows = await listSalaryRows(db);
+export async function getSummary(input: z.input<typeof summaryInput> = {}, db: Database = getDatabase()) {
+  const filter = summaryInput.parse(input);
+  const rows = await listSalaryRows(db, filter);
   return summarizeRows(rows);
 }
 
@@ -35,7 +38,9 @@ export function summarizeRows(rows: SalaryRow[]) {
   const grouped = (map: Map<string, number[]>, label?: 'country' | 'department'): Group[] =>
     [...map].map(([key, values]) => {
       const [name, currency] = label ? key.split('|') : ['', key];
-      return { ...(label ? { [label]: name } : {}), currency, count: values.length, medianMinor: median(values), ...(!label ? { payrollMinor: values.reduce((a, b) => a + b, 0) } : {}) };
+      return { ...(label ? { [label]: name } : {}), currency, count: values.length,
+        medianMinor: median(values), minMinor: Math.min(...values), maxMinor: Math.max(...values),
+        ...(!label ? { payrollMinor: values.reduce((a, b) => a + b, 0) } : {}) };
     });
   return {
     employeeCount: rows.length,

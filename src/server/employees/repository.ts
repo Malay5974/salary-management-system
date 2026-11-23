@@ -56,6 +56,8 @@ export async function insertSalaryHistory(db: Database, id: number, oldSalaryMin
   await db.execute(`INSERT INTO salary_changes (employee_id, old_salary_minor, new_salary_minor, effective_date, reason)
     VALUES (?,?,?,?,?)`, [id, oldSalaryMinor, newSalaryMinor, effectiveDate, reason]);
 }
-export async function listSalaryRows(db: Database) {
-  return db.query<SalaryRow>('SELECT country, department, currency, salary_minor AS salaryMinor FROM employees');
+export async function listSalaryRows(db: Database, filter: { country: string; department: string }) {
+  return db.query<SalaryRow>(`SELECT country, department, currency, salary_minor AS salaryMinor FROM employees
+    WHERE (? = '' OR country = ?) AND (? = '' OR department = ?)`,
+    [filter.country, filter.country, filter.department, filter.department]);
 }

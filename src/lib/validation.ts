@@ -32,3 +32,8 @@ export const listInput = z.object({
   pageSize: z.coerce.number().int().min(1).max(100).default(25),
   sort: z.enum(['name', 'salary_asc', 'salary_desc']).default('name')
 });
+
+export const summaryInput = z.object({
+  country: z.string().trim().max(2).transform(value => value.toUpperCase()).default(''),
+  department: z.string().trim().max(80).default('')
+});

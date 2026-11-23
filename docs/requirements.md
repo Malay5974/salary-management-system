@@ -9,7 +9,7 @@ Give an HR manager one reliable place to manage salary records for an organizati
 - Browse employees with server-side search, country/department filters, sorting, and pagination that remain responsive with 10,000 records.
 - View an employee's current salary, currency, location, department, and effective date.
 - Add an employee and change salary through a deliberate workflow. Record every salary change with effective date, reason, and previous value for auditability.
-- Answer questions through dashboard summaries: employee count, total payroll by currency, median salary by country and department, and distribution by salary band. Keep currencies separate; adding unlike currencies would be misleading.
+- Answer questions through filterable dashboard summaries: employee count, total payroll and salary range by currency, median salary by country and department, and distribution by salary band. Keep currencies separate; adding unlike currencies would be misleading.
 - Seed 10,000 realistic but synthetic employee records, with deterministic results for repeatable review.
 - Validate inputs on the server, show useful errors in the UI, and cover core rules and API behavior with automated tests.
 

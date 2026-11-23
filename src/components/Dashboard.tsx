@@ -5,7 +5,7 @@ import { useCallback, useEffect, useState } from 'react';
 type Employee = { id: number; firstName: string; lastName: string; email: string; department: string; country: string; currency: string; startDate: string; salaryMinor: number; salaryEffectiveDate: string; history?: Change[] };
 type Change = { id: number; oldSalaryMinor: number; newSalaryMinor: number; effectiveDate: string; reason: string; changedAt: string };
 type List = { items: Employee[]; total: number; page: number; pageSize: number };
-type Group = { count: number; medianMinor: number; payrollMinor?: number; currency: string; country?: string; department?: string };
+type Group = { count: number; medianMinor: number; minMinor: number; maxMinor: number; payrollMinor?: number; currency: string; country?: string; department?: string };
 type Summary = { employeeCount: number; byCurrency: Group[]; byCountry: Group[]; byDepartment: Group[]; byBand: (Group & { band: string })[] };
 
 const money = (minor: number, currency: string) => new Intl.NumberFormat('en', { style: 'currency', currency, maximumFractionDigits: 0 }).format(minor / 100);
@@ -26,6 +26,8 @@ export default function Dashboard() {
   const [q, setQ] = useState('');
   const [country, setCountry] = useState('');
   const [department, setDepartment] = useState('');
+  const [summaryCountry, setSummaryCountry] = useState('');
+  const [summaryDepartment, setSummaryDepartment] = useState('');
   const [sort, setSort] = useState('name');
   const [page, setPage] = useState(1);
   const [selected, setSelected] = useState<Employee | null>(null);
@@ -33,7 +35,10 @@ export default function Dashboard() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const loadSummary = useCallback(async () => { try { setSummary(await api<Summary>('/api/summary')); } catch (e) { setError((e as Error).message); } }, []);
+  const loadSummary = useCallback(async () => { try {
+    const params = new URLSearchParams({ country: summaryCountry, department: summaryDepartment });
+    setSummary(await api<Summary>(`/api/summary?${params}`));
+  } catch (e) { setError((e as Error).message); } }, [summaryCountry, summaryDepartment]);
   const loadList = useCallback(async () => {
     setLoading(true);
     try {
@@ -62,9 +67,10 @@ export default function Dashboard() {
         {error && <div className="alert" role="alert">{error}<button onClick={() => setError('')}>×</button></div>}
         {view === 'overview' ? <>
           <div className="page-heading"><div><div className="eyebrow">SALARY INTELLIGENCE</div><h1>People at a glance</h1><p>Understand how your team is paid, across countries and departments.</p></div><button className="primary" onClick={() => { setView('employees'); setShowAdd(true); }}>+ Add employee</button></div>
+          <div className="insight-filters"><span>View pay for</span><select aria-label="Summary country" value={summaryCountry} onChange={e => setSummaryCountry(e.target.value)}><option value="">All countries</option>{countries.map(code => <option key={code}>{code}</option>)}</select><select aria-label="Summary department" value={summaryDepartment} onChange={e => setSummaryDepartment(e.target.value)}><option value="">All departments</option>{departments.map(name => <option key={name}>{name}</option>)}</select>{(summaryCountry || summaryDepartment) && <button onClick={() => { setSummaryCountry(''); setSummaryDepartment(''); }}>Clear filters</button>}</div>
           <div className="hero-card"><div><span className="hero-label">TOTAL EMPLOYEES</span><div className="hero-number">{summary ? summary.employeeCount.toLocaleString() : '—'}</div><p>Active salary records in your organization</p></div><div className="hero-art" aria-hidden="true"><span /><span /><span /><span /><span /></div></div>
           <div className="section-title"><div><h2>Payroll by currency</h2><p>Totals are kept separate to avoid misleading conversion.</p></div></div>
-          <div className="metric-grid">{summary?.byCurrency.map(group => <div className="metric-card" key={group.currency}><span className="currency-badge">{group.currency}</span><div className="metric-value">{money(group.payrollMinor || 0, group.currency)}</div><div className="metric-meta">{group.count.toLocaleString()} employees <span>·</span> Median {money(group.medianMinor, group.currency)}</div></div>) || <div className="empty">Loading payroll summary…</div>}</div>
+          <div className="metric-grid">{summary?.byCurrency.map(group => <div className="metric-card" key={group.currency}><span className="currency-badge">{group.currency}</span><div className="metric-value">{money(group.payrollMinor || 0, group.currency)}</div><div className="metric-meta">{group.count.toLocaleString()} employees <span>·</span> Median {money(group.medianMinor, group.currency)}</div><div className="metric-range">Range {money(group.minMinor, group.currency)}–{money(group.maxMinor, group.currency)}</div></div>) || <div className="empty">Loading payroll summary…</div>}</div>
           <div className="two-col"><SummaryTable title="By country" label="Country" groups={summary?.byCountry || []} keyName="country" /><SummaryTable title="By department" label="Department" groups={summary?.byDepartment || []} keyName="department" /></div>
           <div className="summary-card bands"><h3>Salary distribution</h3><p>Annual salary bands use each employee's own currency.</p><div className="band-grid">{summary?.byCurrency.map(currency => <div className="band-column" key={currency.currency}><strong>{currency.currency}</strong>{['Under 50k','50k-100k','100k-150k','150k+'].map(band => { const count = summary.byBand.find(item => item.currency === currency.currency && item.band === band)?.count || 0; return <div className="band-row" key={band}><span>{band}</span><div><i style={{ width: `${Math.max(2, count / currency.count * 100)}%` }} /></div><b>{count}</b></div>; })}</div>)}</div></div>
         </> : <>

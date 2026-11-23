@@ -33,8 +33,8 @@ describe('salary rules', () => {
     ]);
     expect(summary.employeeCount).toBe(3);
     expect(summary.byCurrency).toMatchObject([
-      { currency: 'INR', payrollMinor: 90000, medianMinor: 90000 },
-      { currency: 'USD', payrollMinor: 30000, medianMinor: 15000 }
+      { currency: 'INR', payrollMinor: 90000, medianMinor: 90000, minMinor: 90000, maxMinor: 90000 },
+      { currency: 'USD', payrollMinor: 30000, medianMinor: 15000, minMinor: 10000, maxMinor: 20000 }
     ]);
     expect(summary.byDepartment).toHaveLength(2);
   });
