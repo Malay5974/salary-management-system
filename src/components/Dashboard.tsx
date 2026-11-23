@@ -54,6 +54,7 @@ export default function Dashboard() {
   useEffect(() => { if (view === 'employees') void loadList(); }, [view, loadList]);
   const openEmployee = async (id: number) => { try { setSelected(await api<Employee>(`/api/employees/${id}`)); } catch (e) { setError((e as Error).message); } };
   const refresh = () => { void loadList(); void loadSummary(); };
+  const signOut = async () => { await fetch('/api/auth/logout', { method: 'POST' }); window.location.reload(); };
 
   return <div className="shell">
     <aside className="sidebar">
@@ -64,7 +65,7 @@ export default function Dashboard() {
       <div className="sidebar-bottom"><div className="avatar">M</div><div><strong>HR Manager</strong><small>Salary workspace</small></div></div>
     </aside>
     <main className="main">
-      <header className="topbar"><span>People / <strong>{view === 'overview' ? 'Overview' : 'Employees'}</strong></span><span className="topbar-right">Synthetic assessment data <span className="status-dot" /></span></header>
+      <header className="topbar"><span>People / <strong>{view === 'overview' ? 'Overview' : 'Employees'}</strong></span><span className="topbar-right">Synthetic assessment data <span className="status-dot" /><button className="logout-button" onClick={() => void signOut()}>Sign out</button></span></header>
       <div className="content">
         {error && <div className="alert" role="alert">{error}<button onClick={() => setError('')}>×</button></div>}
         {view === 'overview' ? <>

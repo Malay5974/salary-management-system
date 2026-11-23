@@ -1,7 +1,12 @@
 import { chromium } from 'playwright';
-import { mkdirSync, readdirSync, renameSync, rmSync } from 'node:fs';
+import { mkdirSync, readdirSync, renameSync, rmSync, readFileSync } from 'node:fs';
 
 const output = 'docs/demo';
+const baseUrl = process.env.DEMO_BASE_URL ?? 'http://127.0.0.1:3000';
+const credentials = readFileSync('.data/demo-login.txt', 'utf8');
+const email = credentials.match(/^Email: (.+)$/m)?.[1];
+const password = credentials.match(/^Password: (.+)$/m)?.[1];
+if (!email || !password) throw new Error('Run npm run auth:setup before recording the demo');
 mkdirSync(output, { recursive: true });
 for (const file of readdirSync(output).filter(name => name.endsWith('.webm'))) rmSync(`${output}/${file}`, { force: true });
 const browser = await chromium.launch({ headless: true });
@@ -9,7 +14,11 @@ const context = await browser.newContext({ viewport: { width: 1440, height: 900 
 const page = await context.newPage();
 const pause = (ms: number) => page.waitForTimeout(ms);
 
-await page.goto('http://127.0.0.1:3000', { waitUntil: 'networkidle' });
+await page.goto(baseUrl, { waitUntil: 'networkidle' });
+await page.getByRole('textbox', { name: 'Email' }).fill(email);
+await page.getByLabel('Password').fill(password);
+await pause(600);
+await page.getByRole('button', { name: 'Sign in' }).click();
 await page.getByText('10,000', { exact: true }).waitFor();
 await pause(1800);
 await page.getByRole('button', { name: 'Employees' }).click();
@@ -30,8 +39,17 @@ await page.getByRole('button', { name: 'Save salary change' }).click();
 await page.locator('.history-item').first().getByText('Annual review').waitFor();
 await pause(1600);
 await page.getByRole('button', { name: 'Close' }).click();
+await page.getByRole('button', { name: 'Import spreadsheet' }).click();
+await page.locator('input[type=file]').setInputFiles('public/employee-import-template.csv');
+await page.getByRole('button', { name: 'Preview import' }).click();
+await page.getByText('Review changes').waitFor();
+await pause(1400);
+await page.getByRole('button', { name: 'Close' }).click();
 await page.getByRole('button', { name: 'Overview' }).click();
 await pause(1800);
+await page.getByRole('button', { name: 'Sign out' }).click();
+await page.getByRole('button', { name: 'Sign in' }).waitFor();
+await pause(900);
 await context.close();
 await browser.close();
 const files = readdirSync(output).filter(name => name.endsWith('.webm'));

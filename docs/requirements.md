@@ -10,6 +10,7 @@ Give an HR manager one reliable place to manage salary records for an organizati
 - View an employee's current salary, currency, location, department, and effective date.
 - Add an employee and change salary through a deliberate workflow. Record every salary change with effective date, reason, and previous value for auditability.
 - Import CSV or XLSX employee spreadsheets with a preview, row validation, and all-or-nothing apply. Match employees by email; update their name, department, and salary, recording salary changes in history. Reject country, currency, or start-date conflicts for correction before apply.
+- Require a single HR demo login before showing salary data or allowing API operations.
 - Answer questions through filterable dashboard summaries: employee count, total payroll and salary range by currency, median salary by country and department, and distribution by salary band. Keep currencies separate; adding unlike currencies would be misleading.
 - Seed 10,000 realistic but synthetic employee records, with deterministic results for repeatable review.
 - Validate inputs on the server, show useful errors in the UI, and cover core rules and API behavior with automated tests.
@@ -27,7 +28,7 @@ Give an HR manager one reliable place to manage salary records for an organizati
 - Payroll calculation, tax, benefits, bonuses, payslips, and payments: these require local legal and financial rules beyond salary record management.
 - Currency conversion and cross-currency totals: exchange rates vary over time and would imply unsupported precision.
 - Spreadsheet export: useful for downstream reporting, but data handling and access controls deserve a separate workflow.
-- Employee self-service, approval chains, and role-based access: this assessment demonstrates the HR workflow. Production use with real data would require SSO, authorization, encryption, retention policy, and an access audit before launch.
+- Employee self-service, approval chains, and individual role-based access: this assessment demonstrates one shared HR demo login. Production use with real data would require SSO, individual authorization, encryption, retention policy, and an access audit before launch.
 
 ## Success
 
