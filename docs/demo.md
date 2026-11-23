@@ -1,6 +1,10 @@
 # Demo walkthrough
 
-The [current browser recording](demo/salary-management-demo.webm) shows the production build running locally with synthetic data.
+Watch [Malay's recorded walkthrough](https://drive.google.com/file/d/1kLeQrgxum6jvSY-hgRy8p6i6gwQo0m9d/view?usp=sharing) for the submission demo.
+
+## Automated browser recording
+
+The [automated browser recording](demo/salary-management-demo.webm) shows the production build running locally with synthetic data.
 
 The recording covers HR first login and initial-password replacement; rejection of the old password; Overview charts and currency selection; employee search; CSV preview and apply; salary change/history; profile navigation and logout; and admin HR search, creation, disable/enable, and password reset. The script also asserts that HR access to account administration is forbidden, a disabled account cannot log in, a reset invalidates its former password, and reset login requires a password change.
 

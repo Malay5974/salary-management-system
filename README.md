@@ -6,7 +6,8 @@ A salary record and pay insights workspace for an HR manager. Built with Next.js
 
 - Live application: <https://salary-management-system-ten.vercel.app>
 - [One-page requirements PDF](docs/artifacts/requirements.pdf)
-- [Current demo video](docs/demo/salary-management-demo.webm) and [walkthrough](docs/demo.md)
+- [Video walkthrough by Malay](https://drive.google.com/file/d/1kLeQrgxum6jvSY-hgRy8p6i6gwQo0m9d/view?usp=sharing)
+- [Demo notes and automated browser recording](docs/demo.md)
 - [Architecture, schema diagrams, tradeoffs, and AI use](docs/architecture.md)
 - [Verification evidence and limits](docs/verification.md)
 
