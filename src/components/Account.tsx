@@ -4,6 +4,13 @@ import type { User } from '@/server/auth/session';
 type HR = {id:string;name:string;email:string;active:number;mustChangePassword:number};
 export default function Account({user}:{user:User}) {
   const [users,setUsers]=useState<HR[]>([]);
+  const [search,setSearch]=useState('');
+  const [page,setPage]=useState(1);
+  const pageSize=10;
+  const filtered=users.filter(hr=>`${hr.name} ${hr.email}`.toLowerCase().includes(search.trim().toLowerCase()));
+  const pages=Math.max(1,Math.ceil(filtered.length/pageSize));
+  const currentPage=Math.min(page,pages);
+  const visible=filtered.slice((currentPage-1)*pageSize,currentPage*pageSize);
   const [message,setMessage]=useState('');
   const [busy,setBusy]=useState(false);
   async function load() { const r=await fetch('/api/users'); if(r.ok)setUsers(await r.json()); }
@@ -21,7 +28,9 @@ export default function Account({user}:{user:User}) {
       <label>Confirm new password<input name="confirm" type="password" autoComplete="new-password" required/></label><button className="primary" disabled={busy}>Change password and sign in again</button>
     </form>
     {user.role==='admin'&&!user.mustChangePassword&&<><h2>Manage HR users</h2><form className="form" onSubmit={async e=>{e.preventDefault();const f=new FormData(e.currentTarget);const data=await submit('/api/users','POST',{name:f.get('name'),email:f.get('email')});if(data){setMessage(`Temporary password: ${data.temporaryPassword} — share privately with this HR user.`);void load();}}}><label>Name<input name="name" required maxLength={80}/></label><label>Email<input name="email" type="email" required/></label><button className="primary" disabled={busy}>Add HR user</button></form>
-    {users.map(hr=><div key={hr.id} className="hr-row"><strong>{hr.name}</strong> · {hr.email} · {hr.active?'Active':'Disabled'} {hr.mustChangePassword?'· Password change required':''}<div className="hr-actions">{(['reset',hr.active?'disable':'enable'] as const).map(action=><button className="secondary" key={action} disabled={busy} onClick={async()=>{const data=await submit('/api/users','PATCH',{id:hr.id,action});if(data){setMessage(data.temporaryPassword?`Temporary password for ${hr.email}: ${data.temporaryPassword}`:'User updated');void load();}}}>{action==='reset'?'Reset password':action==='disable'?'Disable':'Enable'}</button>)}</div></div>)}</>}
+    <div className="hr-list-toolbar"><label htmlFor="hr-search">Search HR accounts</label><input id="hr-search" type="search" placeholder="Search name or email…" value={search} onChange={e=>{setSearch(e.target.value);setPage(1);}}/><span>{users.length} HR accounts · includes active and disabled users</span></div>
+    {visible.length===0&&<p className="empty">No HR accounts match your search.</p>}
+    {visible.map(hr=><div key={hr.id} className="hr-row"><strong>{hr.name}</strong> · {hr.email} · {hr.active?'Active':'Disabled'} {hr.mustChangePassword?'· Password change required':''}<div className="hr-actions">{(['reset',hr.active?'disable':'enable'] as const).map(action=><button className="secondary" key={action} disabled={busy} onClick={async()=>{const data=await submit('/api/users','PATCH',{id:hr.id,action});if(data){setMessage(data.temporaryPassword?`Temporary password for ${hr.email}: ${data.temporaryPassword}`:'User updated');void load();}}}>{action==='reset'?'Reset password':action==='disable'?'Disable':'Enable'}</button>)}</div></div>)}<nav className="hr-pagination" aria-label="HR account pagination"><span>{filtered.length ? `${(currentPage-1)*pageSize+1}–${Math.min(currentPage*pageSize,filtered.length)} of ${filtered.length}` : '0 results'} · Page {currentPage} of {pages}</span><div><button className="secondary" disabled={currentPage===1} onClick={()=>setPage(currentPage-1)}>Previous</button><button className="secondary" disabled={currentPage===pages} onClick={()=>setPage(currentPage+1)}>Next</button></div></nav></>}
     {message&&<p role="status" className="account-message">{message}</p>}<button className="secondary account-signout" onClick={async()=>{await fetch('/api/auth/logout',{method:'POST'});window.location.href='/';}}>Sign out</button>
   </section></main>;
 }

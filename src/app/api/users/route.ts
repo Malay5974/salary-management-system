@@ -10,7 +10,7 @@ async function allowed(request: Request) {
 }
 export async function GET(request: Request) {
   if (!await allowed(request)) return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
-  return NextResponse.json(await getDatabase().query('SELECT id, name, email, active, must_change_password AS mustChangePassword FROM users WHERE role = ?', ['hr']));
+  return NextResponse.json(await getDatabase().query('SELECT id, name, email, active, must_change_password AS mustChangePassword FROM users WHERE role = ? ORDER BY id DESC', ['hr']));
 }
 export async function POST(request: Request) {
   if (!await allowed(request)) return NextResponse.json({ error: 'Admin access required' }, { status: 403 });

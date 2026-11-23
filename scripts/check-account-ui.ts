@@ -17,6 +17,17 @@ try {
    await page.screenshot({path:`.data/account-${user.role}-${width}.png`,fullPage:true});
   }
   if(user.role==='admin' && !user.mustChangePassword){
+   const search=page.getByRole('searchbox',{name:'Search HR accounts'});
+   await page.locator('.hr-row').first().waitFor();
+   const firstEmail=await page.locator('.hr-row').first().innerText();
+   await page.getByRole('button',{name:'Next',exact:true}).click();
+   if(await page.locator('.hr-row').first().innerText()===firstEmail)throw Error('Pagination did not change rows');
+   await search.fill('hr1@acme.test');
+   await page.locator('.hr-row').filter({hasText:'hr1@acme.test'}).waitFor();
+   if(await page.locator('.hr-row').count()!==1)throw Error('Email search failed');
+   await search.fill('no-such-hr-account');await page.getByText('No HR accounts match your search.').waitFor();
+   await search.fill('');
+   console.log('HR pagination, email search and empty results passed');
    const email=`ui-check-${Date.now()}@example.test`;
    let id:number|undefined;
    try {
