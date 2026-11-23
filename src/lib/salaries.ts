@@ -40,11 +40,10 @@ export async function getEmployee(id: number, db: Database = getDatabase()) {
 export async function createEmployee(input: z.input<typeof employeeInput>, db: Database = getDatabase()) {
   await ensureSchema(db);
   const value = employeeInput.parse(input);
-  const id = Number(Date.now()) * 1000 + Math.floor(Math.random() * 1000);
   const rows = await db.query(`INSERT INTO employees
-    (id, first_name, last_name, email, department, country, currency, start_date, salary_minor, salary_effective_date)
-    VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING ${employeeSelect}`,
-    [id, value.firstName, value.lastName, value.email, value.department, value.country, value.currency, value.startDate, value.salaryMinor, value.salaryEffectiveDate]);
+    (first_name, last_name, email, department, country, currency, start_date, salary_minor, salary_effective_date)
+    VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING ${employeeSelect}`,
+    [value.firstName, value.lastName, value.email, value.department, value.country, value.currency, value.startDate, value.salaryMinor, value.salaryEffectiveDate]);
   return mapEmployee(rows[0]);
 }
 

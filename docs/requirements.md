@@ -15,7 +15,7 @@ Give an HR manager one reliable place to manage salary records for an organizati
 
 ## Rules and acceptance
 
-- Salary is a nonnegative integer in minor currency units, so decimal rounding does not corrupt pay. Currency is an ISO 4217 three-letter code.
+- Salary is a nonnegative integer in minor currency units, so decimal rounding does not corrupt pay. The assessment supports US/USD, IN/INR, GB/GBP, DE/EUR, and CA/CAD; each has two minor units per major unit.
 - Each employee has one current salary. Salary changes append an immutable history event and update the current value in one database transaction.
 - Effective dates cannot precede the employee's start date. A change may be backdated, but the current salary reflects the latest recorded change, not a reconstructed historical payroll ledger.
 - At 10,000 employees, list and dashboard requests use database queries and indexes rather than downloading all rows to the browser.

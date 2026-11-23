@@ -28,6 +28,7 @@ The deployed application requires `DATABASE_URL` and will return an error rather
 
 - [One-page requirements](docs/requirements.md)
 - [Architecture and AI use](docs/architecture.md)
+- [Recorded demo and walkthrough](docs/demo.md)
 - [Assessment source PDF](Salary%20Management%20Assessment-%20Candidates.pdf)
 
 ## API

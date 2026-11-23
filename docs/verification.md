@@ -7,6 +7,7 @@
 - `npm run build` checks the production Next.js build and API routes.
 - `npm run seed` creates 10,000 synthetic records and is safe to rerun without replacing salary changes.
 - With the built app running locally, `GET /api/summary` returned 10,000 employees, five currencies, and salary band counts. A filtered `GET /api/employees` returned a bounded page and matching total.
+- A headless Chromium session exercised the overview, employee search, details, salary change, audit history, and return to overview. The resulting WebM is committed under `docs/demo/`.
 
 ## Performance choices
 

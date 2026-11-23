@@ -21,6 +21,7 @@ describe('salary records', () => {
 
   it('rejects an effective date before employment', async () => {
     await expect(createEmployee({ ...sample, email: 'other@example.test', salaryEffectiveDate: '2019-12-31' }, db)).rejects.toThrow();
+    await expect(createEmployee({ ...sample, email: 'other@example.test', country: 'IN' }, db)).rejects.toThrow();
   });
 
   it('lists with server-side filtering and pagination', async () => {

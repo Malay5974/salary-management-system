@@ -29,6 +29,7 @@ export function getDatabase(): Database {
 }
 
 const schema = `
+CREATE SEQUENCE IF NOT EXISTS employees_id_seq START 1000001;
 CREATE TABLE IF NOT EXISTS employees (
   id BIGINT PRIMARY KEY,
   first_name TEXT NOT NULL,
@@ -42,6 +43,7 @@ CREATE TABLE IF NOT EXISTS employees (
   salary_effective_date DATE NOT NULL,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+ALTER TABLE employees ALTER COLUMN id SET DEFAULT nextval('employees_id_seq');
 CREATE INDEX IF NOT EXISTS employees_name_idx ON employees (last_name, first_name, id);
 CREATE INDEX IF NOT EXISTS employees_country_department_idx ON employees (country, department);
 CREATE TABLE IF NOT EXISTS salary_changes (
