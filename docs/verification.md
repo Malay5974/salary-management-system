@@ -2,12 +2,21 @@
 
 ## Local checks
 
-- `npm test` covers identity normalization, country/currency pairing, date and salary validation, bounded pagination, currency-specific totals and medians, salary change service rules, CSV/XLSX parsing, and signed demo sessions. These tests are fast and do not need a database.
+- `npm test` covers identity normalization, country/currency pairing, date and salary validation, bounded pagination, currency-specific totals and medians, salary change service rules, CSV/XLSX parsing, and salted password hashing and database-backed session validation. These tests are fast and do not need a database.
 - `npm run typecheck` checks TypeScript types; `npm run build` checks the production Next.js build and routes.
 - `npm run seed` populated a local MySQL database with 10,000 synthetic records and was rerun without replacing existing changes.
 - `npm run smoke` exercised the actual local MySQL database: summary filtering, pagination, employee creation, duplicate-email rejection, salary history, rollback, import preview, audited update of an existing employee, creation of a new employee, and conflict detection. It removed its synthetic test employees afterward.
 - A headless Chromium session exercised the built app through the browser and recorded the resulting WebM under `docs/demo/`.
-- A clean browser confirmed the login screen blocks the dashboard, salary API returns 401 before sign-in, the dashboard and API work after sign-in, and sign-out returns to the login screen.
+- Earlier browser checks confirmed unauthenticated dashboard/API protection and login/logout for the original shared login. That evidence predates the database-account change and does not establish the full current login workflow.
+
+## Current account and chart evidence
+
+- `npm run seed:users` created one admin and 20 HR accounts locally. Temporary passwords are private and Git-ignored. Re-running the seed preserves existing accounts.
+- Unit tests verify independent salted password hashes, incorrect-password rejection, token tampering/expiry, inactive-user rejection, and session-version revocation using a mocked database.
+- `node --env-file=.env.local --import tsx scripts/check-account-ui.ts` checks admin and HR layouts at 1440px and 390px, button styling, overflow, and browser errors. It uses database-backed signed test sessions, so it does **not** test credential entry or first-login password changes.
+- That browser script checks admin creation, disable/enable, and reset controls with a temporary HR account removed afterward; HR search, pagination, and empty results; sidebar profile navigation; chart type switching, currency selection, and country-filter currency fallback.
+- Full browser verification of temporary-password login, mandatory password replacement, subsequent login, reset-password login, disabled-account login, and logout remains the next verification step. Admin controls passing does not prove those complete authentication flows.
+- The latest recorded local checks passed 13 unit tests, TypeScript checking, and a production build. This document records prior execution evidence; editing documentation does not rerun those checks.
 
 ## Performance choices
 
@@ -18,7 +27,7 @@
 ## Known boundaries
 
 - Hostinger MariaDB has not yet been connected or tested. The local integration run used MySQL 9.6.
-- The app uses synthetic data and one shared HR demo account. Do not enter real salaries. Production use needs individual access control, audit of reads, backup/restore, monitoring, and retention policy.
+- The app uses synthetic data with database-backed admin and HR accounts. SSO, email recovery, access/read auditing, backup/restore, monitoring, and retention policy are outside the implemented assessment scope.
 - Salary history displays the newest 100 changes per employee. It is an audit trail of recorded changes, not a payroll ledger or effective-date reconstruction.
 - Salary bands use numeric thresholds within each currency. Compare them only inside one currency.
 

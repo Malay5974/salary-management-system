@@ -15,7 +15,7 @@ Requires Node.js 22 or newer and a local MySQL server.
    GRANT ALL PRIVILEGES ON salary_management.* TO 'salary_app'@'127.0.0.1';
    ```
 
-3. Copy `.env.example` to `.env.local` and replace `YOUR_PASSWORD`. Keep that file private; Git ignores it.
+3. Copy `.env.example` to `.env.local`, replace `YOUR_PASSWORD`, and set `SESSION_SECRET` to a cryptographically random value of at least 32 characters. Generate one with `node -e "console.log(require('node:crypto').randomBytes(32).toString('hex'))"`. Keep that file private; Git ignores it.
 4. Run `npm ci`, then `npm run seed:users` to create one admin and 20 HR users. Generated initial passwords are in ignored `.data/seed-user-logins.txt`. Rerunning preserves existing users.
 5. Run:
 
@@ -28,6 +28,14 @@ Requires Node.js 22 or newer and a local MySQL server.
    ```
 
 Open <http://localhost:3000> and use `.data/seed-user-logins.txt`. Every account must change its initial password. The admin manages HR users from Account / Manage HR users; HR users can change their own password under Account. Run `npm run seed` for the synthetic employee data.
+
+## Accounts and overview
+
+- Sign in with an admin or HR account stored in MySQL. Initial and reset passwords must be changed before opening the salary workspace. After changing a password, sign in again; older sessions are revoked.
+- The seed provisions `admin@acme.test` and `hr1@acme.test` through `hr20@acme.test`. Use the generated passwords from `.data/seed-user-logins.txt` privately. Seed passwords stop working after a user changes or resets them. Rerunning the seed does not reset accounts.
+- Click the sidebar avatar, name, or role to open Account. All users can change their own password. The single admin can add HRs, reset passwords, and enable/disable users. HRs cannot manage accounts; no app workflow adds admins.
+- The admin list includes active and disabled HR accounts, with name/email search and 10 accounts per page. New accounts appear first.
+- Overview includes department headcount and salary-distribution charts with independent Bar/Donut controls. Charts follow country/department filters; salary distribution has a currency selector. Animations respect reduced-motion preferences. Add employee is available in Employees.
 
 ## Deploy with Vercel and Hostinger MariaDB
 
@@ -59,3 +67,14 @@ Accounts and salted password hashes live in MySQL. Only the seed provisions the 
 - `POST /api/employees/:id/salary` — transactional salary update and history event.
 - `POST /api/imports/preview` — multipart file preview with row classification and errors.
 - `POST /api/imports/apply` — revalidate and apply CSV/XLSX import in one transaction.
+
+## Account API
+
+- `POST /api/auth/login` — authenticate a database user and issue a signed cookie.
+- `POST /api/auth/logout` — clear the browser session cookie.
+- `POST /api/auth/password` — verify the current password, replace it, and revoke older sessions.
+- `GET /api/users` — admin-only list of all HR accounts, including disabled accounts.
+- `POST /api/users` — admin-only HR creation; returns a generated temporary password once.
+- `PATCH /api/users` — admin-only HR enable, disable, or password reset. Reset returns a new temporary password once.
+
+Full login-flow verification, hosted database/deployment verification, and a replacement demo are tracked in [verification notes](docs/verification.md) and [demo notes](docs/demo.md).
