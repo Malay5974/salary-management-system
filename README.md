@@ -1,33 +1,49 @@
 # Salary management system
 
-A salary record and pay insights workspace for an HR manager. Built with Next.js, TypeScript, PostgreSQL-compatible SQL, local PGlite, and Neon Postgres for Vercel.
+A salary record and pay insights workspace for an HR manager. Built with Next.js, TypeScript, and MySQL-compatible SQL. Local development uses MySQL; Hostinger Web/Cloud provides MariaDB, which is the intended hosted database.
 
 ## Run locally
 
-Requires Node.js 22 or newer.
+Requires Node.js 22 or newer and a local MySQL server.
 
-```bash
-npm ci
-npm run seed
-npm run dev
-```
+1. Start MySQL (`brew services start mysql` on macOS).
+2. Create an isolated database and user. For example, in a local MySQL shell:
 
-Open <http://localhost:3000>. The local database lives in `.data/` and is ignored by Git. `npm run seed` creates 10,000 deterministic synthetic employees on an empty database. It does not overwrite existing data. Use `npm test`, `npm run typecheck`, and `npm run build` to verify the project.
+   ```sql
+   CREATE DATABASE salary_management CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+   CREATE USER 'salary_app'@'127.0.0.1' IDENTIFIED BY 'choose-a-local-password';
+   GRANT ALL PRIVILEGES ON salary_management.* TO 'salary_app'@'127.0.0.1';
+   ```
 
-## Deploy to Vercel
+3. Copy `.env.example` to `.env.local` and replace `YOUR_PASSWORD`. Keep that file private; Git ignores it.
+4. Run:
 
-1. Connect this GitHub repository to a Vercel project.
-2. Provision a Neon Postgres database through the Vercel Marketplace and expose its connection string as `DATABASE_URL` in the project.
-3. Deploy the project. The app creates tables on first use.
-4. Seed the production database once from a trusted local shell using `DATABASE_URL='...' npm run seed`. Do not place the connection string in Git or logs.
-5. Open the deployment, confirm the overview shows 10,000 employees, search an employee, and record a test salary change.
+   ```bash
+   npm ci
+   npm run seed
+   npm test
+   npm run smoke
+   npm run dev
+   ```
 
-The deployed application requires `DATABASE_URL` and will return an error rather than silently use ephemeral storage. The public assessment uses synthetic records. It is not suitable for real employee salary data without authentication, authorization, and operational controls.
+Open <http://localhost:3000>. The seed creates 10,000 deterministic synthetic employees and does not overwrite existing salary changes. `npm run smoke` creates and removes a synthetic employee on the local database only. `npm run typecheck` and `npm run build` validate the TypeScript and production build.
+
+## Deploy with Vercel and Hostinger MariaDB
+
+1. In Hostinger hPanel, create a MySQL database and user for this app. Record the database name, username, password, and database hostname privately.
+2. In Hostinger's **Remote MySQL** section, allow access from the Vercel app's outbound IP. If fixed outbound IPs are unavailable, Hostinger offers an **Any Host** setting; use it only with a strong unique database password and synthetic assessment data. See [Hostinger's remote MySQL instructions](https://www.hostinger.com/support/1583546-how-to-set-up-remote-mysql-access-in-hostinger/).
+3. Grant Vercel's GitHub integration access to this repository and link it to the `salary-management-system` project.
+4. Add `DATABASE_URL` to the Vercel project as an encrypted environment variable, in the form `mysql://USER:ENCODED_PASSWORD@HOST:3306/DATABASE`. Percent-encode reserved characters in the password. Do not commit this value.
+5. Deploy, then seed the Hostinger database from a trusted shell with `DATABASE_URL='...' npm run seed`. Do not put the connection string in logs or source control.
+6. Verify the live overview shows 10,000 employees and test search, employee creation, salary update, and history.
+
+A deployed app requires `DATABASE_URL`; it never falls back to ephemeral storage. The public assessment uses synthetic records. Real salary data would require authentication, authorization, encryption, backup/restore, and an access audit.
 
 ## Documentation
 
 - [One-page requirements](docs/requirements.md)
 - [Architecture and AI use](docs/architecture.md)
+- [Verification and performance](docs/verification.md)
 - [Recorded demo and walkthrough](docs/demo.md)
 - [Assessment source PDF](Salary%20Management%20Assessment-%20Candidates.pdf)
 
@@ -37,4 +53,4 @@ The deployed application requires `DATABASE_URL` and will return an error rather
 - `GET /api/employees` — server-side search, filters, sorting, pagination.
 - `POST /api/employees` — add employee.
 - `GET /api/employees/:id` — record and latest 100 salary changes.
-- `POST /api/employees/:id/salary` — atomic salary update and history event.
+- `POST /api/employees/:id/salary` — transactional salary update and history event.

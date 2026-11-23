@@ -1,4 +1,4 @@
-import { ensureSchema, getDatabase } from '../src/lib/db';
+import { closeDatabase, ensureSchema, getDatabase } from '../src/lib/db';
 
 const db = getDatabase();
 const first = ['Aarav','Mia','Noah','Isha','Liam','Emma','Oliver','Sophia','Ethan','Ava','Lucas','Amelia','Leo','Isabella','Aria','James','Riya','Daniel','Fatima','Mateo'];
@@ -23,14 +23,14 @@ for (let start = 1; start <= 10_000; start += 250) {
     const department = departments[(id * 11) % departments.length];
     const startDate = new Date(Date.UTC(2015 + (id % 11), (id * 3) % 12, 1 + (id % 27))).toISOString().slice(0, 10);
     const salaryMinor = place.base + ((id * 7919) % 8_000_000);
-    const offset = values.length;
     values.push(id, firstName, lastName, `employee${id}@example.test`, department, place.country, place.currency, startDate, salaryMinor, startDate);
-    placeholders.push(`(${Array.from({ length: 10 }, (_, index) => `$${offset + index + 1}`).join(',')})`);
+    placeholders.push('(?,?,?,?,?,?,?,?,?,?)');
   }
-  await db.query(`INSERT INTO employees
+  await db.execute(`INSERT INTO employees
     (id, first_name, last_name, email, department, country, currency, start_date, salary_minor, salary_effective_date)
-    VALUES ${placeholders.join(',')} ON CONFLICT (id) DO NOTHING`, values);
+    VALUES ${placeholders.join(',')} ON DUPLICATE KEY UPDATE id = id`, values);
   if (start % 2500 === 1) console.log(`Seeded ${Math.min(start + 249, 10_000)}/10,000`);
 }
-const result = await db.query<{ count: string }>('SELECT count(*)::text AS count FROM employees');
+const result = await db.query<{ count: number }>('SELECT COUNT(*) AS count FROM employees');
 console.log(`Seed complete: ${result[0].count} employees. Existing records were left untouched.`);
+await closeDatabase();

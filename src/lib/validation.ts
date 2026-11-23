@@ -10,7 +10,7 @@ export const employeeInput = z.object({
   country: z.string().trim().transform(value => value.toUpperCase()).pipe(z.enum(['US', 'IN', 'GB', 'DE', 'CA'])),
   currency: z.string().trim().transform(value => value.toUpperCase()).pipe(z.enum(['USD', 'INR', 'GBP', 'EUR', 'CAD'])),
   startDate: date,
-  salaryMinor: z.number().int().min(0).max(1_000_000_000_000),
+  salaryMinor: z.number().int().min(0).max(1_000_000_000),
   salaryEffectiveDate: date
 }).refine(value => value.salaryEffectiveDate >= value.startDate, {
   message: 'Salary effective date cannot precede start date', path: ['salaryEffectiveDate']
@@ -19,7 +19,7 @@ export const employeeInput = z.object({
 });
 
 export const salaryChangeInput = z.object({
-  salaryMinor: z.number().int().min(0).max(1_000_000_000_000),
+  salaryMinor: z.number().int().min(0).max(1_000_000_000),
   effectiveDate: date,
   reason: z.string().trim().min(3).max(500)
 });
