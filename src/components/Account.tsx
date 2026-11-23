@@ -9,6 +9,8 @@ type HR = {
   mustChangePassword: number;
 };
 export default function Account({ user }: { user: User }) {
+  const [ready, setReady] = useState(false);
+  useEffect(() => setReady(true), []);
   const [users, setUsers] = useState<HR[]>([]);
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
@@ -69,6 +71,7 @@ export default function Account({ user }: { user: User }) {
           <p>Change your initial password before accessing the workspace.</p>
         )}
         <form
+          method="post"
           className="form"
           onSubmit={async (e) => {
             e.preventDefault();
@@ -116,7 +119,7 @@ export default function Account({ user }: { user: User }) {
               required
             />
           </label>
-          <button className="primary" disabled={busy}>
+          <button className="primary" disabled={busy || !ready}>
             Change password and sign in again
           </button>
         </form>
@@ -124,6 +127,7 @@ export default function Account({ user }: { user: User }) {
           <>
             <h2>Manage HR users</h2>
             <form
+              method="post"
               className="form"
               onSubmit={async (e) => {
                 e.preventDefault();
@@ -148,7 +152,7 @@ export default function Account({ user }: { user: User }) {
                 Email
                 <input name="email" type="email" required />
               </label>
-              <button className="primary" disabled={busy}>
+              <button className="primary" disabled={busy || !ready}>
                 Add HR user
               </button>
             </form>
@@ -182,7 +186,7 @@ export default function Account({ user }: { user: User }) {
                       <button
                         className="secondary"
                         key={action}
-                        disabled={busy}
+                        disabled={busy || !ready}
                         onClick={async () => {
                           const data = await submit("/api/users", "PATCH", {
                             id: hr.id,
