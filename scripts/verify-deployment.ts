@@ -24,13 +24,16 @@ const browser = await chromium.launch({ headless: true });
 const context = await browser.newContext();
 const page = await context.newPage();
 const errors: string[] = [];
+page.setDefaultTimeout(60000);
+page.setDefaultNavigationTimeout(60000);
 page.on("pageerror", (e) => errors.push(e.message));
+await page.route("https://fonts.googleapis.com/**", (route) => route.abort());
 async function status(response: { status(): number }, expected: number) {
   if (response.status() !== expected)
     throw Error(`Expected HTTP ${expected}, received ${response.status()}`);
 }
 async function login(value: string) {
-  await page.goto(baseUrl!);
+  await page.goto(baseUrl!, { waitUntil: "domcontentloaded" });
   await page.getByLabel("Email", { exact: true }).fill(email);
   await page.getByLabel("Password", { exact: true }).fill(value);
   await page.getByRole("button", { name: "Sign in", exact: true }).click();
@@ -59,6 +62,7 @@ try {
   await page.getByRole("button", { name: "Sign in", exact: true }).waitFor();
   await login(changed);
   await page.getByRole("heading", { name: "People at a glance" }).waitFor();
+  console.log("Hosted login and password replacement passed");
   const summaryResponse = await context.request.get(`${baseUrl}/api/summary`);
   const summary = await summaryResponse.json();
   if (!summaryResponse.ok())
@@ -96,6 +100,7 @@ try {
     .locator("tbody tr")
     .filter({ hasText: "employee1@example.test" })
     .waitFor();
+  console.log("Hosted charts, mobile layout and employee search passed");
   const create = await context.request.post(`${baseUrl}/api/employees`, {
     data: {
       firstName: "Live",
@@ -131,6 +136,7 @@ try {
   ).json();
   if (history.history[0]?.reason !== "Deployment verification")
     throw Error("Missing salary audit");
+  console.log("Hosted employee creation and salary audit passed");
   const csv = `firstName,lastName,email,department,country,currency,startDate,annualSalary,salaryEffectiveDate\nLive,Verification,${email},Product,US,USD,2024-01-01,105000,2026-02-01\n`;
   for (const action of ["preview", "apply"]) {
     const response = await context.request.post(
@@ -167,6 +173,10 @@ try {
     "Hosted verification passed: 10,000 records, real first login/password replacement, HR authorization, desktop/mobile charts, employee search/create, salary audit, import preview/apply, logout and disabled-account rejection.",
   );
 } finally {
+  await page
+    .screenshot({ path: ".data/live-last-state.png", fullPage: true })
+    .catch(() => {});
+  console.log({ lastPath: new URL(page.url()).pathname });
   await context.close();
   await browser.close();
   if (employeeId) {
