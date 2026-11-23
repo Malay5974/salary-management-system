@@ -1,0 +1,11 @@
+firstName,lastName,email,department,country,currency,startDate,annualSalary,salaryEffectiveDate
+Isabella,Clark,employee1@example.test,Sales,GB,GBP,2016-04-02,51079.19,2026-11-23
+Oliver,Lee,employee2@example.test,People,CA,CAD,2017-07-03,71158.38,2026-11-23
+Mateo,Singh,employee3@example.test,Product,IN,INR,2018-10-04,25237.57,2026-11-23
+Leo,Taylor,employee4@example.test,Marketing,DE,EUR,2019-01-05,57316.76,2026-11-23
+Emma,Miller,employee5@example.test,Operations,US,USD,2020-04-06,81395.95,2026-11-23
+Fatima,Smith,employee6@example.test,Design,GB,GBP,2021-07-07,51475.14,2026-11-23
+Amelia,Walker,employee7@example.test,Finance,CA,CAD,2022-10-08,71554.33,2026-11-23
+Liam,White,employee8@example.test,Engineering,IN,INR,2023-01-09,25633.52,2026-11-23
+Daniel,Martin,employee9@example.test,Sales,DE,EUR,2024-04-10,57712.71,2026-11-23
+Lucas,Chen,employee10@example.test,People,US,USD,2025-07-11,81791.90,2026-11-23
