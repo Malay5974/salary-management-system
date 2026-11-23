@@ -63,9 +63,8 @@ export default function Dashboard({user}:{user:{name:string;role:'admin'|'hr'}})
       <button className={`nav-item ${view === 'overview' ? 'active' : ''}`} onClick={() => setView('overview')}><span>▦</span> Overview</button>
       <button className={`nav-item ${view === 'employees' ? 'active' : ''}`} onClick={() => setView('employees')}><span>♙</span> Employees</button>
       <div className="sidebar-account">
-        <a className="nav-item sidebar-profile" href="/account" aria-label="Profile" title="Profile"><span aria-hidden="true">♙</span><span className="sidebar-action-label">Profile</span></a>
         <button className="nav-item" onClick={() => void signOut()} aria-label="Logout" title="Logout"><span aria-hidden="true">↪</span><span className="sidebar-action-label">Logout</span></button>
-        <div className="sidebar-identity"><div className="avatar">{user.name.slice(0,1).toUpperCase()}</div><div><strong>{user.name}</strong><small>{user.role === 'admin' ? 'Administrator' : 'HR workspace'}</small></div></div>
+        <a className="sidebar-identity" href="/account" aria-label="Open profile" title="Open profile"><div className="avatar">{user.name.slice(0,1).toUpperCase()}</div><div><strong>{user.name}</strong><small>{user.role === 'admin' ? 'Administrator' : 'HR workspace'}</small></div></a>
       </div>
     </aside>
     <main className="main">
