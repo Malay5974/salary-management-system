@@ -1,6 +1,6 @@
 # Architecture and decisions
 
-- A React UI calls small Next.js route handlers. The handlers delegate business decisions to services, SQL to repositories, and database setup to an explicit migration script. Server-side pagination keeps employee list responses bounded at 10,000 records.
+- A React UI calls small Next.js route handlers. The handlers delegate business decisions to services, SQL to repositories, and database setup to an explicit migration script. Server-side pagination keeps employee list responses bounded at 10,000 records. The Recently updated sort uses the employee's database update timestamp, so salary edits and imported changes appear first; equal timestamps use employee ID for stable ordering.
 - MySQL-compatible tables and queries are used locally and in production. This follows the user's Hostinger Web/Cloud database choice: those plans provide MariaDB rather than PostgreSQL. The local MySQL server validates the implemented SQL; the Hostinger connection remains to be verified after a database is created.
 - Store pay as integer minor units with an explicit currency. Never sum pay across currencies. The assessment supports five country/currency pairs with two decimal places. Inputs cap annual salary at 1,000,000,000 minor units, keeping 10,000-record payroll totals within safe JavaScript integer range.
 - Salary changes lock the employee row, update current pay, and insert an audit event in one transaction. Failed or unchanged changes roll back.

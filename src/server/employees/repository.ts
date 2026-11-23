@@ -14,12 +14,12 @@ const employeeColumns = `id, first_name AS firstName, last_name AS lastName, ema
   department, country, currency, start_date AS startDate,
   salary_minor AS salaryMinor, salary_effective_date AS salaryEffectiveDate`;
 
-export type ListFilter = { q: string; country: string; department: string; page: number; pageSize: number; sort: 'name' | 'salary_asc' | 'salary_desc' };
+export type ListFilter = { q: string; country: string; department: string; page: number; pageSize: number; sort: 'name' | 'salary_asc' | 'salary_desc' | 'recently_updated' };
 export async function listEmployeeRows(db: Database, filter: ListFilter) {
   const where = `WHERE (? = '' OR LOCATE(LOWER(?), LOWER(CONCAT(first_name, ' ', last_name, ' ', email))) > 0)
     AND (? = '' OR country = ?) AND (? = '' OR department = ?)`;
   const params = [filter.q, filter.q, filter.country, filter.country, filter.department, filter.department];
-  const order = { name: 'last_name ASC, first_name ASC, id ASC', salary_asc: 'salary_minor ASC, id ASC', salary_desc: 'salary_minor DESC, id ASC' }[filter.sort];
+  const order = { name: 'last_name ASC, first_name ASC, id ASC', salary_asc: 'salary_minor ASC, id ASC', salary_desc: 'salary_minor DESC, id ASC', recently_updated: 'updated_at DESC, id DESC' }[filter.sort];
   const [items, counts] = await Promise.all([
     db.query<EmployeeRow>(`SELECT ${employeeColumns} FROM employees ${where} ORDER BY ${order} LIMIT ? OFFSET ?`, [...params, filter.pageSize, (filter.page - 1) * filter.pageSize]),
     db.query<{ count: number }>(`SELECT COUNT(*) AS count FROM employees ${where}`, params)

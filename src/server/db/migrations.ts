@@ -31,6 +31,13 @@ const migrations = [
         CONSTRAINT salary_changes_employee_fk FOREIGN KEY (employee_id) REFERENCES employees(id)
       ) ENGINE=InnoDB`
     ]
+  },
+  {
+    version: 2,
+    statements: [
+      `ALTER TABLE employees ADD COLUMN updated_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6)`,
+      `CREATE INDEX employees_updated_idx ON employees (updated_at, id)`
+    ]
   }
 ];
 
