@@ -62,10 +62,11 @@ export default function Dashboard() {
       <div className="nav-label">WORKSPACE</div>
       <button className={`nav-item ${view === 'overview' ? 'active' : ''}`} onClick={() => setView('overview')}><span>▦</span> Overview</button>
       <button className={`nav-item ${view === 'employees' ? 'active' : ''}`} onClick={() => setView('employees')}><span>♙</span> Employees</button>
+      <button className="nav-item" onClick={() => void signOut()}><span>↪</span> Sign out</button>
       <div className="sidebar-bottom"><div className="avatar">M</div><div><strong>HR Manager</strong><small>Salary workspace</small></div></div>
     </aside>
     <main className="main">
-      <header className="topbar"><span>People / <strong>{view === 'overview' ? 'Overview' : 'Employees'}</strong></span><span className="topbar-right">Synthetic assessment data <span className="status-dot" /><button className="logout-button" onClick={() => void signOut()}>Sign out</button></span></header>
+      <header className="topbar"><span>People / <strong>{view === 'overview' ? 'Overview' : 'Employees'}</strong></span><span className="topbar-right">Synthetic assessment data <span className="status-dot" /></span></header>
       <div className="content">
         {error && <div className="alert" role="alert">{error}<button onClick={() => setError('')}>×</button></div>}
         {view === 'overview' ? <>
