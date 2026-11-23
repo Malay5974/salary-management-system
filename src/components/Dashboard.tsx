@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import OverviewCharts from './OverviewCharts';
 import ImportEmployees from './ImportEmployees';
 
 type Employee = { id: number; firstName: string; lastName: string; email: string; department: string; country: string; currency: string; startDate: string; salaryMinor: number; salaryEffectiveDate: string; history?: Change[] };
@@ -78,7 +79,8 @@ export default function Dashboard({user}:{user:{name:string;role:'admin'|'hr'}})
           <div className="section-title"><div><h2>Payroll by currency</h2><p>Totals are kept separate to avoid misleading conversion.</p></div></div>
           <div className="metric-grid">{summary?.byCurrency.map(group => <div className="metric-card" key={group.currency}><span className="currency-badge">{group.currency}</span><div className="metric-value">{money(group.payrollMinor || 0, group.currency)}</div><div className="metric-meta">{group.count.toLocaleString()} employees <span>·</span> Median {money(group.medianMinor, group.currency)}</div><div className="metric-range">Range {money(group.minMinor, group.currency)}–{money(group.maxMinor, group.currency)}</div></div>) || <div className="empty">Loading payroll summary…</div>}</div>
           <div className="two-col"><SummaryTable title="By country" label="Country" groups={summary?.byCountry || []} keyName="country" /><SummaryTable title="By department" label="Department" groups={summary?.byDepartment || []} keyName="department" /></div>
-          <div className="summary-card bands"><h3>Salary distribution</h3><p>Annual salary bands use each employee's own currency.</p><div className="band-grid">{summary?.byCurrency.map(currency => <div className="band-column" key={currency.currency}><strong>{currency.currency}</strong>{['Under 50k','50k-100k','100k-150k','150k+'].map(band => { const count = summary.byBand.find(item => item.currency === currency.currency && item.band === band)?.count || 0; return <div className="band-row" key={band}><span>{band}</span><div><i style={{ width: `${Math.max(2, count / currency.count * 100)}%` }} /></div><b>{count}</b></div>; })}</div>)}</div></div>
+          {summary && <OverviewCharts departments={summary.byDepartment} bands={summary.byBand} currencies={summary.byCurrency.map(g=>g.currency)} />}
+
         </> : <>
           <div className="page-heading"><div><div className="eyebrow">PEOPLE DIRECTORY</div><h1>Employees</h1><p>Search and manage salary records for your organization.</p></div><div className="heading-actions"><button className="secondary" onClick={() => setShowImport(true)}>Import spreadsheet</button><button className="primary" onClick={() => setShowAdd(true)}>+ Add employee</button></div></div>
           <div className="table-card"><div className="filters"><input aria-label="Search employees" placeholder="Search name or email…" value={q} onChange={e => { setQ(e.target.value); setPage(1); }} /><select aria-label="Country" value={country} onChange={e => { setCountry(e.target.value); setPage(1); }}><option value="">All countries</option>{countries.map(c => <option key={c}>{c}</option>)}</select><select aria-label="Department" value={department} onChange={e => { setDepartment(e.target.value); setPage(1); }}><option value="">All departments</option>{departments.map(d => <option key={d}>{d}</option>)}</select><select aria-label="Sort" value={sort} onChange={e => { setSort(e.target.value); setPage(1); }}><option value="name">Name A–Z</option><option value="recently_updated">Recently updated</option><option value="salary_desc">Highest salary</option><option value="salary_asc">Lowest salary</option></select></div>
@@ -96,8 +98,10 @@ export default function Dashboard({user}:{user:{name:string;role:'admin'|'hr'}})
 
 function SummaryTable({ title, label, groups, keyName }: { title: string; label: string; groups: Group[]; keyName: 'country' | 'department' }) {
   const [currency, setCurrency] = useState('USD');
-  const visible = keyName === 'department' ? groups.filter(g => g.currency === currency) : groups;
-  return <div className="summary-card"><div className="summary-head"><h3>{title}</h3>{keyName === 'department' && <select aria-label="Department currency" value={currency} onChange={e => setCurrency(e.target.value)}>{[...new Set(groups.map(g => g.currency))].map(code => <option key={code}>{code}</option>)}</select>}</div><table><thead><tr><th>{label.toUpperCase()}</th><th>PEOPLE</th><th>MEDIAN SALARY</th></tr></thead><tbody>{visible.map((g, index) => <tr key={`${g[keyName]}-${g.currency}-${index}`}><td><strong>{g[keyName]}</strong><small>{g.currency}</small></td><td>{g.count.toLocaleString()}</td><td>{money(g.medianMinor, g.currency)}</td></tr>)}</tbody></table></div>;
+  const availableCurrencies = [...new Set(groups.map(g => g.currency))];
+  const selectedCurrency = availableCurrencies.includes(currency) ? currency : availableCurrencies[0] ?? '';
+  const visible = keyName === 'department' ? groups.filter(g => g.currency === selectedCurrency) : groups;
+  return <div className="summary-card"><div className="summary-head"><h3>{title}</h3>{keyName === 'department' && <select aria-label="Department currency" value={selectedCurrency} onChange={e => setCurrency(e.target.value)}>{[...new Set(groups.map(g => g.currency))].map(code => <option key={code}>{code}</option>)}</select>}</div><table><thead><tr><th>{label.toUpperCase()}</th><th>PEOPLE</th><th>MEDIAN SALARY</th></tr></thead><tbody>{visible.map((g, index) => <tr key={`${g[keyName]}-${g.currency}-${index}`}><td><strong>{g[keyName]}</strong><small>{g.currency}</small></td><td>{g.count.toLocaleString()}</td><td>{money(g.medianMinor, g.currency)}</td></tr>)}</tbody></table></div>;
 }
 
 function EmployeePanel({ employee, onClose, onUpdated }: { employee: Employee; onClose: () => void; onUpdated: (employee: Employee) => void }) {

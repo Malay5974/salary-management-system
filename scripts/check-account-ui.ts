@@ -24,6 +24,19 @@ try {
     await profile.waitFor();const box=await logout.boundingBox();if(!box || box.y<650 || box.x>250)throw Error('Logout is not at sidebar bottom');
     await page.screenshot({path:`.data/sidebar-${width}.png`});
    }
+   await page.getByLabel('Employees by department chart type').selectOption('donut');
+   await page.getByRole('img',{name:/Employees by department:/}).waitFor();
+   await page.getByLabel('Salary distribution chart type').selectOption('donut');
+   await page.getByLabel('Salary distribution currency').selectOption('INR');
+   await page.getByRole('img',{name:/Salary distribution:/}).waitFor();
+   await Promise.all([page.waitForResponse(r=>r.url().includes('/api/summary?country=GB') && r.status()===200),page.getByLabel('Summary country').selectOption('GB')]);
+   await page.waitForFunction(()=> (document.querySelector('[aria-label="Salary distribution currency"]') as HTMLSelectElement)?.value==='GBP');
+   await page.getByLabel('Salary distribution currency').getByRole('option',{name:'GBP',exact:true}).waitFor({state:'attached'});
+   if(await page.getByLabel('Salary distribution currency').inputValue()!=='GBP')throw Error('Chart currency did not follow filter');
+   if(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth))throw Error('Chart mobile overflow');
+   await page.screenshot({path:'.data/overview-charts-mobile.png',fullPage:true});
+   await page.setViewportSize({width:1440,height:1000});await page.screenshot({path:'.data/overview-charts-desktop.png',fullPage:true});
+   console.log('Chart type switching, currency selection and country filters passed');
    await page.getByRole('link',{name:'Open profile',exact:true}).click();await page.getByRole('heading',{name:'Account',exact:true}).waitFor();
    console.log('Bottom-left user profile link and Logout verified on desktop and mobile');
    const search=page.getByRole('searchbox',{name:'Search HR accounts'});

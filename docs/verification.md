@@ -23,3 +23,5 @@
 - Salary bands use numeric thresholds within each currency. Compare them only inside one currency.
 
 Account styling verification: Playwright checked admin and HR account pages at 1440px and 390px, button styling, horizontal overflow, and browser errors. Admin create, disable, enable, and password-reset controls passed using a temporary local account that was removed afterward. Re-run with `node --env-file=.env.local --import tsx scripts/check-account-ui.ts`. Screenshots are saved under ignored `.data/`.
+
+Overview charts: browser checks cover Bar/Donut switching, salary currency selection, country-filter currency fallback, and mobile overflow. Charts use the existing filtered summary and respect reduced-motion preferences.
