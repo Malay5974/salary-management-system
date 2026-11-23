@@ -1,20 +1,18 @@
 # Demo walkthrough
 
-The [existing browser recording](demo/salary-management-demo.webm) demonstrates the earlier local application: shared HR sign-in, 10,000 synthetic employees, salary overview, employee search, salary change/history, spreadsheet preview, and sign-out.
+The [current browser recording](demo/salary-management-demo.webm) shows the production build running locally with synthetic data.
 
-**This recording is outdated.** It predates database-backed admin/HR accounts, mandatory password changes, HR account management, the revised sidebar, and configurable charts. It is not evidence that the current authentication workflow or hosted deployment has been verified.
+The recording covers HR first login and initial-password replacement; rejection of the old password; Overview charts and currency selection; employee search; CSV preview and apply; salary change/history; profile navigation and logout; and admin HR search, creation, disable/enable, and password reset. The script also asserts that HR access to account administration is forbidden, a disabled account cannot log in, a reset invalidates its former password, and reset login requires a password change.
 
-## Replacement recording checklist
+Run against local synthetic data only:
 
-After completing authentication verification and deployment, record the current app showing:
+```bash
+npm run build
+node --env-file=.env.local node_modules/next/dist/bin/next start --hostname 127.0.0.1 --port 3100
+# In a second terminal:
+node --env-file=.env.local --import tsx scripts/record-demo.ts
+```
 
-1. HR sign-in and initial-password replacement, without exposing credentials in the final video.
-2. Overview filters and Bar/Donut charts, including salary-currency selection.
-3. Employee search, sorting, pagination, salary change, and history.
-4. Spreadsheet preview and apply with a valid sample.
-5. Admin-only HR search/pagination, creation, disable/enable, and password reset.
-6. Profile navigation through the sidebar identity and Logout.
+The recorder creates disposable HR and employee records and removes them afterward. The existing local admin must have completed initial-password setup. The admin segment uses a signed local test session; it does not demonstrate entering the admin password. Temporary demo credentials shown during account management belong to disposable accounts removed at completion.
 
-`scripts/record-demo.ts` is also outdated: it reads the former `.data/demo-login.txt`, assumes the former login workflow, and uses the old Sign out label. Update and verify that script as part of the separate demo-recording step before running it. It deletes the existing WebM before recording, so preserve the current artifact until its replacement succeeds.
-
-The recording uses synthetic data. Local video does not prove that Vercel or Hostinger MariaDB is live; verify the hosted application separately and document the final URL.
+Recording happens in an ignored temporary directory. The committed WebM is replaced only after the full workflow passes. This local video does not itself prove the hosted application works; live verification is recorded in verification notes.
