@@ -1,38 +1,24 @@
 # Salary management — product requirements
 
-This document reflects the current agreed scope; Git history preserves the initial requirements and subsequent changes.
+**User:** ACME HR manager. **Goal:** replace spreadsheets for 10,000 employees across countries with searchable salary records and understandable pay insights. This is the current agreed scope; Git history preserves the original pre-build document.
 
-## Goal and user
+## Scope and acceptance
 
-Give an HR manager one reliable place to manage salary records for an organization of 10,000 employees across countries, and answer basic questions about how the organization pays people. Replace error-prone spreadsheet lookups with searchable records and clear salary summaries.
+- Find employees by name/email, country, and department; sort and paginate without downloading the employee directory. Add employees from the Employees section.
+- View current pay and recorded salary history. Save salary changes with effective date, reason, and previous amount atomically; reject unchanged amounts and dates before employment began.
+- Import CSV/XLSX with preview and row errors. Apply all valid rows in one transaction. Match email to update name, department, and salary; audit salary changes. Reject country/currency/start-date conflicts.
+- Require individual admin/HR sign-in. Seed one admin and 20 HR users; the admin manages HR accounts but cannot create additional admins. Require initial/reset password replacement; revoke sessions after password or account changes.
+- Show employee counts, currency-specific payroll/ranges/medians, and country/department summaries. Department headcount and salary-band charts support Bar/Donut views, filters, currency selection, and reduced motion.
+- Seed 10,000 deterministic synthetic employees. Use a relational database, server validation, bounded API responses, and fast deterministic unit tests. Provide reproducible setup, a working deployment, and a current video demo.
 
-## In scope
+## Rules and tradeoffs
 
-- Browse employees with server-side search, country/department filters, sorting, and pagination that remain responsive with 10,000 records.
-- View an employee's current salary, currency, location, department, and effective date.
-- Add an employee and change salary through a deliberate workflow. Record every salary change with effective date, reason, and previous value for auditability.
-- Import CSV or XLSX employee spreadsheets with a preview, row validation, and all-or-nothing apply. Match employees by email; update their name, department, and salary, recording salary changes in history. Reject country, currency, or start-date conflicts for correction before apply.
-- Require database-backed admin or HR sign-in. Provision one admin and seed 20 HR accounts; only the admin can create, enable, disable, or reset HR users. Require replacement of initial and reset passwords before salary access.
-- Show animated department headcount and salary-distribution charts with Bar/Donut controls and a salary-currency selector. Respect reduced-motion preferences and country/department filters.
-- Answer questions through filterable dashboard summaries: employee count, total payroll and salary range by currency, median salary by country and department, and distribution by salary band. Keep currencies separate; adding unlike currencies would be misleading.
-- Seed 10,000 realistic but synthetic employee records, with deterministic results for repeatable review.
-- Validate inputs on the server, show useful errors in the UI, and cover core rules and API behavior with automated tests.
+Store salary as nonnegative integer minor units; support US/USD, IN/INR, GB/GBP, DE/EUR, and CA/CAD. Never combine unlike currencies. Current pay reflects the latest recorded change; history is an audit trail, not an effective-date payroll reconstruction. Summary aggregation over 10,000 server-side rows is acceptable at this scale. HR account pagination is client-side for the small account directory; employee pagination is SQL-backed.
 
-## Rules and acceptance
+## Deliberately excluded
 
-- Salary is a nonnegative integer in minor currency units, so decimal rounding does not corrupt pay. The assessment supports US/USD, IN/INR, GB/GBP, DE/EUR, and CA/CAD; each has two minor units per major unit.
-- Each employee has one current salary. Salary changes append an immutable history event and update the current value in one database transaction.
-- Effective dates cannot precede the employee's start date. A change may be backdated, but the current salary reflects the latest recorded change, not a reconstructed historical payroll ledger.
-- At 10,000 employees, list and dashboard requests use database queries and indexes rather than downloading all rows to the browser.
-- No real employee data is required or included.
-
-## Deliberately out of scope
-
-- Payroll calculation, tax, benefits, bonuses, payslips, and payments: these require local legal and financial rules beyond salary record management.
-- Currency conversion and cross-currency totals: exchange rates vary over time and would imply unsupported precision.
-- Spreadsheet export: useful for downstream reporting, but data handling and access controls deserve a separate workflow.
-- Employee self-service, approval chains, additional admins, SSO, and email-based password recovery: the assessment provides admin-managed HR accounts and admin password resets. Broader identity workflows are outside this scope.
+Payroll payments, taxes, benefits, payslips, and bonuses need country-specific rules beyond salary records. Currency conversion needs an exchange-rate policy. Employee self-service, approval chains, SSO, email recovery, and spreadsheet export are outside the agreed assessment scope. Real-data operations would additionally need access auditing, backup/restore procedures, monitoring, and retention controls.
 
 ## Success
 
-An HR manager can find any seeded employee, inspect salary history, record a change, and obtain salary summaries by country and department. The seeded app can be run and tested from the documented commands.
+An HR reviewer can sign in, find seeded records, import changes, inspect history, and answer pay questions. An admin can manage HR access. The README links to runnable setup, tests, a verified hosted app, and the demo; credentials are shared privately.
