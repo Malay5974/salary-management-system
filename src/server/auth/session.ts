@@ -1,51 +1,56 @@
-import { createHmac, scryptSync, timingSafeEqual } from 'node:crypto';
+import { createHmac, randomBytes, scryptSync, timingSafeEqual } from 'node:crypto';
 import { NextResponse } from 'next/server';
-
+import { getDatabase } from '../db/connection';
 export const SESSION_COOKIE = 'salary_session';
 const SESSION_SECONDS = 8 * 60 * 60;
-
-function config() {
-  const email = process.env.HR_EMAIL?.toLowerCase();
-  const salt = process.env.HR_PASSWORD_SALT;
-  const hash = process.env.HR_PASSWORD_HASH;
-  const secret = process.env.SESSION_SECRET;
-  if (!email || !salt || !hash || !secret || secret.length < 32) throw new Error('HR login is not configured');
-  return { email, salt, hash, secret };
+export type User = { id: string; name: string; email: string; role: 'admin' | 'hr'; mustChangePassword: number; active: number; sessionVersion: number };
+export function hashPassword(password: string) {
+  const salt = randomBytes(32).toString('hex');
+  return { salt, hash: scryptSync(password, salt, 32).toString('hex') };
 }
-function equalHex(left: string, right: string) {
-  if (!/^[0-9a-f]+$/i.test(left) || !/^[0-9a-f]+$/i.test(right)) return false;
-  const a = Buffer.from(left, 'hex'); const b = Buffer.from(right, 'hex');
-  return a.length === b.length && timingSafeEqual(a, b);
+export function matchesPassword(password: string, salt: string, hash: string) {
+  const candidate = scryptSync(password, salt, 32);
+  const expected = Buffer.from(hash, 'hex');
+  return expected.length === candidate.length && timingSafeEqual(candidate, expected);
 }
-export function verifyCredentials(email: string, password: string) {
-  const values = config();
-  const candidate = scryptSync(password, values.salt, 32).toString('hex');
-  return email.trim().toLowerCase() === values.email && equalHex(candidate, values.hash);
+function secret() {
+  const value = process.env.SESSION_SECRET;
+  if (!value || value.length < 32) throw new Error('SESSION_SECRET must contain at least 32 characters');
+  return value;
 }
-export function createSession(now = Date.now()) {
-  const values = config();
-  const payload = Buffer.from(JSON.stringify({ email: values.email, expires: now + SESSION_SECONDS * 1000 })).toString('base64url');
-  const signature = createHmac('sha256', values.secret).update(payload).digest('hex');
-  return `${payload}.${signature}`;
+export async function verifyCredentials(email: string, password: string) {
+  const [user] = await getDatabase().query<User & { salt: string; hash: string }>(`SELECT id, name, email, role, must_change_password AS mustChangePassword, active, session_version AS sessionVersion, password_salt AS salt, password_hash AS hash FROM users WHERE email = ?`, [email.trim().toLowerCase()]);
+  // Perform password work even when the account does not exist.
+  const valid = matchesPassword(password, user?.salt ?? 'missing-user', user?.hash ?? '00'.repeat(32));
+  return user && user.active && valid ? user : null;
 }
-export function verifySession(token: string | undefined, now = Date.now()) {
-  if (!token) return false;
+export function createSession(user: User, now = Date.now()) {
+  const payload = Buffer.from(JSON.stringify({ id: String(user.id), version: user.sessionVersion, expires: now + SESSION_SECONDS * 1000 })).toString('base64url');
+  return `${payload}.${createHmac('sha256', secret()).update(payload).digest('hex')}`;
+}
+export async function verifySession(token: string | undefined, now = Date.now()): Promise<User | null> {
+  if (!token) return null;
   const [payload, signature, extra] = token.split('.');
-  if (!payload || !signature || extra) return false;
-  const values = config();
-  const expected = createHmac('sha256', values.secret).update(payload).digest('hex');
-  if (!equalHex(signature, expected)) return false;
+  if (!payload || !signature || extra || !/^[a-f0-9]{64}$/.test(signature)) return null;
+  const expected = createHmac('sha256', secret()).update(payload).digest();
+  if (!timingSafeEqual(Buffer.from(signature, 'hex'), expected)) return null;
   try {
-    const value = JSON.parse(Buffer.from(payload, 'base64url').toString()) as { email?: string; expires?: number };
-    return value.email === values.email && typeof value.expires === 'number' && value.expires > now;
-  } catch { return false; }
+    const value = JSON.parse(Buffer.from(payload, 'base64url').toString());
+    if (typeof value.id !== 'string' || typeof value.expires !== 'number' || value.expires <= now) return null;
+    const [user] = await getDatabase().query<User>(`SELECT id, name, email, role, must_change_password AS mustChangePassword, active, session_version AS sessionVersion FROM users WHERE id = ?`, [value.id]);
+    return user?.active && user.sessionVersion === value.version ? user : null;
+  } catch { return null; }
 }
 export function cookieOptions() {
-  return { httpOnly: true, sameSite: 'lax' as const, secure: process.env.NODE_ENV === 'production' && Boolean(process.env.VERCEL), path: '/', maxAge: SESSION_SECONDS };
+  return { httpOnly: true, sameSite: 'lax' as const, secure: process.env.NODE_ENV === 'production', path: '/', maxAge: SESSION_SECONDS };
 }
-export function requireAuth(request: Request) {
-  const cookies = request.headers.get('cookie') ?? '';
-  const token = cookies.split(';').map(item => item.trim()).find(item => item.startsWith(`${SESSION_COOKIE}=`))?.slice(SESSION_COOKIE.length + 1);
-  if (verifySession(token)) return null;
-  return NextResponse.json({ error: 'Sign in required' }, { status: 401 });
+export function requestUser(request: Request) {
+  const token = (request.headers.get('cookie') ?? '').split(';').map(x => x.trim()).find(x => x.startsWith(`${SESSION_COOKIE}=`))?.slice(SESSION_COOKIE.length + 1);
+  return verifySession(token);
+}
+export async function requireAuth(request: Request) {
+  const user = await requestUser(request);
+  if (!user) return NextResponse.json({ error: 'Sign in required' }, { status: 401 });
+  if (user.mustChangePassword) return NextResponse.json({ error: 'Change your initial password first' }, { status: 403 });
+  return null;
 }

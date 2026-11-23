@@ -8,9 +8,10 @@ const input = z.object({ email: z.email(), password: z.string().min(1).max(200) 
 export async function POST(request: Request) {
   try {
     const value = input.parse(await request.json());
-    if (!verifyCredentials(value.email, value.password)) return NextResponse.json({ error: 'Invalid email or password' }, { status: 401 });
+    const user = await verifyCredentials(value.email, value.password);
+    if (!user) return NextResponse.json({ error: 'Invalid email or password' }, { status: 401 });
     const response = NextResponse.json({ signedIn: true });
-    response.cookies.set(SESSION_COOKIE, createSession(), cookieOptions());
+    response.cookies.set(SESSION_COOKIE, createSession(user), cookieOptions());
     return response;
   } catch (error) { return apiError(error); }
 }

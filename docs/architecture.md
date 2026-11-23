@@ -8,7 +8,7 @@
 - Synthetic seed data uses a fixed algorithm and stable IDs. Rerunning it does not duplicate employees or overwrite changes.
 - Spreadsheet preview parses and validates the file without writing. Apply reparses it, locks matching employee rows, stages up to 10,000 rows in a temporary table, and uses set-based SQL inside one transaction. Matching email updates names and department; salary changes add a history entry. Existing country, currency, and start date must match so an audit entry never loses the meaning of its currency or employment period.
 - The API owns validation and constraints. UI validation improves feedback but is not a security boundary.
-- A single HR persona uses a shared demo login. A salted scrypt password hash is stored in environment settings. A signed, HTTP-only, SameSite session cookie protects the page and every salary API. This demonstrates access control for synthetic data; production use requires individual identities, stronger session operations, and an access audit.
+ - Users are stored in MySQL with salted scrypt password hashes, role, initial-password flag, active flag, and session version. A unique generated admin slot limits the database to one admin. Signed cookies identify a user; every request checks the current database account and session version. Initial passwords must be changed before salary access.
 
 ## AI use
 

@@ -39,6 +39,18 @@ const migrations = [
       `CREATE INDEX employees_updated_idx ON employees (updated_at, id)`
     ]
   }
+  ,{ version: 3, statements: [
+    `CREATE TABLE users (
+      id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+      name VARCHAR(80) NOT NULL, email VARCHAR(254) NOT NULL UNIQUE,
+      role ENUM('admin','hr') NOT NULL DEFAULT 'hr',
+      admin_slot TINYINT GENERATED ALWAYS AS (CASE WHEN role = 'admin' THEN 1 ELSE NULL END) STORED UNIQUE,
+      password_salt VARCHAR(64) NOT NULL, password_hash VARCHAR(128) NOT NULL,
+      must_change_password BOOLEAN NOT NULL DEFAULT TRUE, active BOOLEAN NOT NULL DEFAULT TRUE,
+      session_version INT NOT NULL DEFAULT 1,
+      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB`
+  ] }
 ];
 
 export async function runMigrations(db: Database = getDatabase()) {

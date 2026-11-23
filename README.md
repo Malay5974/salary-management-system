@@ -16,7 +16,7 @@ Requires Node.js 22 or newer and a local MySQL server.
    ```
 
 3. Copy `.env.example` to `.env.local` and replace `YOUR_PASSWORD`. Keep that file private; Git ignores it.
-4. Run `npm ci`, then `npm run auth:setup` to create a demo HR account. The credentials are written to `.data/demo-login.txt`, which Git ignores. Running setup again rotates the password and signs out existing sessions.
+4. Run `npm ci`, then `npm run seed:users` to create one admin and 20 HR users. Generated initial passwords are in ignored `.data/seed-user-logins.txt`. Rerunning preserves existing users.
 5. Run:
 
    ```bash
@@ -27,19 +27,19 @@ Requires Node.js 22 or newer and a local MySQL server.
    npm run dev
    ```
 
-Open <http://localhost:3000> and sign in with the credentials in `.data/demo-login.txt`. Restart the dev server after running `auth:setup` so it loads the new environment values. The seed creates 10,000 deterministic synthetic employees and does not overwrite existing salary changes. `npm run smoke` creates and removes a synthetic employee on the local database only. `npm run typecheck` and `npm run build` validate the TypeScript and production build.
+Open <http://localhost:3000> and use `.data/seed-user-logins.txt`. Every account must change its initial password. The admin manages HR users from Account / Manage HR users; HR users can change their own password under Account. Run `npm run seed` for the synthetic employee data.
 
 ## Deploy with Vercel and Hostinger MariaDB
 
 1. In Hostinger hPanel, create a MySQL database and user for this app. Record the database name, username, password, and database hostname privately.
 2. In Hostinger's **Remote MySQL** section, allow access from the Vercel app's outbound IP. If fixed outbound IPs are unavailable, Hostinger offers an **Any Host** setting; use it only with a strong unique database password and synthetic assessment data. See [Hostinger's remote MySQL instructions](https://www.hostinger.com/support/1583546-how-to-set-up-remote-mysql-access-in-hostinger/).
 3. Grant Vercel's GitHub integration access to this repository and link it to the `salary-management-system` project.
-4. Add `DATABASE_URL`, `HR_EMAIL`, `HR_PASSWORD_SALT`, `HR_PASSWORD_HASH`, and `SESSION_SECRET` to the Vercel project as encrypted environment variables. The database URL is `mysql://USER:ENCODED_PASSWORD@HOST:3306/DATABASE`; percent-encode reserved characters in its password. Generate HR values with `npm run auth:setup` and transfer them through Vercel settings, not Git.
+4. Add `DATABASE_URL` and a random `SESSION_SECRET` (at least 32 characters) to Vercel environment settings. Run migrations and `npm run seed:users` against the target database before signing in. Share generated passwords privately.
 5. Run `DATABASE_URL='...' npm run migrate` and then `DATABASE_URL='...' npm run seed` from a trusted shell, then deploy. Do not put the connection string in logs or source control.
 6. Verify the live overview shows 10,000 employees and test search, employee creation, salary update, and history.
 
 A deployed app requires `DATABASE_URL`; it never falls back to ephemeral storage. The assessment uses synthetic records.
-The single shared HR login is for assessment access. Give reviewers the demo credentials privately; do not commit them. Real salary data needs individual accounts, role-based authorization, account recovery, and access auditing.
+Accounts and salted password hashes live in MySQL. Only the seed provisions the single admin; admin APIs create HR users only. Admins can create, disable, enable, and reset HR accounts. Password changes and account changes revoke existing sessions.
 
 ## Documentation
 

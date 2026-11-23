@@ -7,7 +7,7 @@ export const runtime = 'nodejs';
 type Context = { params: Promise<{ id: string }> };
 
 export async function POST(request: Request, context: Context) {
-  const unauthorized = requireAuth(request); if (unauthorized) return unauthorized;
+  const unauthorized = await requireAuth(request); if (unauthorized) return unauthorized;
   try {
     const id = Number((await context.params).id);
     if (!Number.isSafeInteger(id) || id < 1) return NextResponse.json({ error: 'Invalid employee ID' }, { status: 400 });
