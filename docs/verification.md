@@ -21,3 +21,5 @@
 - The app uses synthetic data and one shared HR demo account. Do not enter real salaries. Production use needs individual access control, audit of reads, backup/restore, monitoring, and retention policy.
 - Salary history displays the newest 100 changes per employee. It is an audit trail of recorded changes, not a payroll ledger or effective-date reconstruction.
 - Salary bands use numeric thresholds within each currency. Compare them only inside one currency.
+
+Account styling verification: Playwright checked admin and HR account pages at 1440px and 390px, button styling, horizontal overflow, and browser errors. Admin create, disable, enable, and password-reset controls passed using a temporary local account that was removed afterward. Re-run with `node --env-file=.env.local --import tsx scripts/check-account-ui.ts`. Screenshots are saved under ignored `.data/`.
