@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import ImportEmployees from './ImportEmployees';
 
 type Employee = { id: number; firstName: string; lastName: string; email: string; department: string; country: string; currency: string; startDate: string; salaryMinor: number; salaryEffectiveDate: string; history?: Change[] };
 type Change = { id: number; oldSalaryMinor: number; newSalaryMinor: number; effectiveDate: string; reason: string; changedAt: string };
@@ -32,6 +33,7 @@ export default function Dashboard() {
   const [page, setPage] = useState(1);
   const [selected, setSelected] = useState<Employee | null>(null);
   const [showAdd, setShowAdd] = useState(false);
+  const [showImport, setShowImport] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -74,7 +76,7 @@ export default function Dashboard() {
           <div className="two-col"><SummaryTable title="By country" label="Country" groups={summary?.byCountry || []} keyName="country" /><SummaryTable title="By department" label="Department" groups={summary?.byDepartment || []} keyName="department" /></div>
           <div className="summary-card bands"><h3>Salary distribution</h3><p>Annual salary bands use each employee's own currency.</p><div className="band-grid">{summary?.byCurrency.map(currency => <div className="band-column" key={currency.currency}><strong>{currency.currency}</strong>{['Under 50k','50k-100k','100k-150k','150k+'].map(band => { const count = summary.byBand.find(item => item.currency === currency.currency && item.band === band)?.count || 0; return <div className="band-row" key={band}><span>{band}</span><div><i style={{ width: `${Math.max(2, count / currency.count * 100)}%` }} /></div><b>{count}</b></div>; })}</div>)}</div></div>
         </> : <>
-          <div className="page-heading"><div><div className="eyebrow">PEOPLE DIRECTORY</div><h1>Employees</h1><p>Search and manage salary records for your organization.</p></div><button className="primary" onClick={() => setShowAdd(true)}>+ Add employee</button></div>
+          <div className="page-heading"><div><div className="eyebrow">PEOPLE DIRECTORY</div><h1>Employees</h1><p>Search and manage salary records for your organization.</p></div><div className="heading-actions"><button className="secondary" onClick={() => setShowImport(true)}>Import spreadsheet</button><button className="primary" onClick={() => setShowAdd(true)}>+ Add employee</button></div></div>
           <div className="table-card"><div className="filters"><input aria-label="Search employees" placeholder="Search name or email…" value={q} onChange={e => { setQ(e.target.value); setPage(1); }} /><select aria-label="Country" value={country} onChange={e => { setCountry(e.target.value); setPage(1); }}><option value="">All countries</option>{countries.map(c => <option key={c}>{c}</option>)}</select><select aria-label="Department" value={department} onChange={e => { setDepartment(e.target.value); setPage(1); }}><option value="">All departments</option>{departments.map(d => <option key={d}>{d}</option>)}</select><select aria-label="Sort" value={sort} onChange={e => { setSort(e.target.value); setPage(1); }}><option value="name">Name A–Z</option><option value="salary_desc">Highest salary</option><option value="salary_asc">Lowest salary</option></select></div>
             <div className="table-scroll"><table><thead><tr><th>EMPLOYEE</th><th>DEPARTMENT</th><th>COUNTRY</th><th>CURRENT SALARY</th><th>EFFECTIVE</th><th></th></tr></thead><tbody>{list?.items.map(person => <tr key={person.id} onClick={() => void openEmployee(person.id)}><td><div className="person"><div className="person-avatar">{person.firstName[0]}{person.lastName[0]}</div><div><strong>{person.firstName} {person.lastName}</strong><small>{person.email}</small></div></div></td><td>{person.department}</td><td>{person.country}</td><td className="salary">{money(person.salaryMinor, person.currency)}</td><td>{person.salaryEffectiveDate}</td><td className="arrow">→</td></tr>)}</tbody></table>{loading && <div className="empty">Loading employees…</div>}{!loading && list?.items.length === 0 && <div className="empty">No employees match these filters.</div>}</div>
             <div className="pagination"><span>{list ? `${list.total.toLocaleString()} employees · Page ${list.page} of ${Math.max(1, Math.ceil(list.total / list.pageSize))}` : 'Loading…'}</span><div><button disabled={page <= 1} onClick={() => setPage(page - 1)}>Previous</button><button disabled={!list || page * list.pageSize >= list.total} onClick={() => setPage(page + 1)}>Next</button></div></div>
@@ -84,6 +86,7 @@ export default function Dashboard() {
     </main>
     {selected && <EmployeePanel employee={selected} onClose={() => setSelected(null)} onUpdated={employee => { setSelected(employee); refresh(); }} />}
     {showAdd && <AddEmployee onClose={() => setShowAdd(false)} onAdded={() => { setShowAdd(false); refresh(); }} />}
+    {showImport && <ImportEmployees onClose={() => setShowImport(false)} onApplied={() => { setShowImport(false); refresh(); }} />}
   </div>;
 }
 

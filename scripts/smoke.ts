@@ -1,11 +1,14 @@
 import { closeDatabase, getDatabase } from '../src/server/db/connection';
 import { changeSalary, createEmployee, getEmployee, listEmployees } from '../src/server/employees/service';
 import { getSummary } from '../src/server/reports/summary';
+import { applyImport, previewImport } from '../src/server/imports/service';
+import { findEmployeeByEmail } from '../src/server/employees/repository';
 
 const url = new URL(process.env.DATABASE_URL ?? '');
 if (!['127.0.0.1', 'localhost'].includes(url.hostname)) throw new Error('Smoke test only runs against a local database');
 const db = getDatabase();
 let id: number | undefined;
+let importedId: number | undefined;
 try {
   const summary = await getSummary({}, db);
   if (summary.employeeCount < 10_000) throw new Error(`Expected at least 10,000 employees, found ${summary.employeeCount}`);
@@ -44,8 +47,23 @@ try {
     if ((error as Error).message !== 'rollback-check') throw error;
   }
   if ((await getEmployee(id, db))?.salaryMinor !== 10_000_000) throw new Error('Transaction rollback failed');
-  console.log('Local MySQL smoke test passed: summary, search, create, duplicate rejection, salary history, transaction rollback.');
+  const newEmail = `import-${Date.now()}@example.test`;
+  const header = 'firstName,lastName,email,department,country,currency,startDate,annualSalary,salaryEffectiveDate';
+  const csv = Buffer.from(`${header}\nSmoke,Test,${created.email},Product,US,USD,2024-01-01,110000.00,2024-03-01\nNew,Import,${newEmail},Engineering,US,USD,2024-01-01,95000.00,2024-01-01\n`);
+  const preview = await previewImport('smoke.csv', csv, db);
+  if (preview.updateCount !== 1 || preview.createCount !== 1 || preview.errorCount !== 0) throw new Error('Import preview classified rows incorrectly');
+  const applied = await applyImport('smoke.csv', csv, db);
+  if (applied.updateCount !== 1 || applied.createCount !== 1) throw new Error('Import apply counts incorrect');
+  importedId = Number((await findEmployeeByEmail(db, newEmail))?.id);
+  if (!importedId || (await getEmployee(id, db))?.salaryMinor !== 11_000_000 || (await getEmployee(id, db))?.history.length !== 2) throw new Error('Import did not create and audit salary update');
+  const conflict = Buffer.from(`${header}\nSmoke,Test,${created.email},Product,IN,INR,2024-01-01,110000.00,2024-03-01\n`);
+  if ((await previewImport('conflict.csv', conflict, db)).errorCount !== 1) throw new Error('Import failed to flag immutable country/currency conflict');
+  console.log('Local MySQL smoke test passed: salary workflow, rollback, import preview, audited update, new employee, conflict detection.');
 } finally {
+  if (importedId) {
+    await db.execute('DELETE FROM salary_changes WHERE employee_id = ?', [importedId]);
+    await db.execute('DELETE FROM employees WHERE id = ?', [importedId]);
+  }
   if (id) {
     await db.execute('DELETE FROM salary_changes WHERE employee_id = ?', [id]);
     await db.execute('DELETE FROM employees WHERE id = ?', [id]);

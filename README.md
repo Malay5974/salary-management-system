@@ -45,6 +45,7 @@ A deployed app requires `DATABASE_URL`; it never falls back to ephemeral storage
 - [One-page requirements](docs/requirements.md)
 - [Architecture and AI use](docs/architecture.md)
 - [Verification and performance](docs/verification.md)
+- [Spreadsheet import format and behavior](docs/import.md)
 - [Recorded demo and walkthrough](docs/demo.md)
 - [Assessment source PDF](Salary%20Management%20Assessment-%20Candidates.pdf)
 
@@ -55,3 +56,5 @@ A deployed app requires `DATABASE_URL`; it never falls back to ephemeral storage
 - `POST /api/employees` — add employee.
 - `GET /api/employees/:id` — record and latest 100 salary changes.
 - `POST /api/employees/:id/salary` — transactional salary update and history event.
+- `POST /api/imports/preview` — multipart file preview with row classification and errors.
+- `POST /api/imports/apply` — revalidate and apply CSV/XLSX import in one transaction.

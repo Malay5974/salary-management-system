@@ -6,6 +6,7 @@
 - Salary changes lock the employee row, update current pay, and insert an audit event in one transaction. Failed or unchanged changes roll back.
 - The dashboard reads 10,000 salary rows on the server and computes currency-specific medians, payroll totals, and bands. This is simple and portable across MySQL and MariaDB at the assessment's fixed scale. No employee-level salary rows are sent to the browser. At much larger scale, precomputed aggregate tables or database window queries would be preferable.
 - Synthetic seed data uses a fixed algorithm and stable IDs. Rerunning it does not duplicate employees or overwrite changes.
+- Spreadsheet preview parses and validates the file without writing. Apply reparses it, locks matching employee rows, stages up to 10,000 rows in a temporary table, and uses set-based SQL inside one transaction. Matching email updates names and department; salary changes add a history entry. Existing country, currency, and start date must match so an audit entry never loses the meaning of its currency or employment period.
 - The API owns validation and constraints. UI validation improves feedback but is not a security boundary.
 - A single HR persona is assumed. Authentication and real-data readiness are intentionally out of scope for the assessment, as stated in requirements.
 

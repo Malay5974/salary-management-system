@@ -2,10 +2,10 @@
 
 ## Local checks
 
-- `npm test` covers identity normalization, country/currency pairing, date and salary validation, bounded pagination, currency-specific totals and medians, and salary change service rules. These tests are fast and do not need a database.
+- `npm test` covers identity normalization, country/currency pairing, date and salary validation, bounded pagination, currency-specific totals and medians, salary change service rules, and CSV/XLSX parsing. These tests are fast and do not need a database.
 - `npm run typecheck` checks TypeScript types; `npm run build` checks the production Next.js build and routes.
 - `npm run seed` populated a local MySQL database with 10,000 synthetic records and was rerun without replacing existing changes.
-- `npm run smoke` exercised the actual local MySQL database: summary including country filtering, filtered pagination, employee creation, duplicate-email rejection, transactional salary change, audit history, rejection of an unchanged salary, and transaction rollback. It removed its synthetic test employee afterward.
+- `npm run smoke` exercised the actual local MySQL database: summary filtering, pagination, employee creation, duplicate-email rejection, salary history, rollback, import preview, audited update of an existing employee, creation of a new employee, and conflict detection. It removed its synthetic test employees afterward.
 - A headless Chromium session exercised the built app through the browser and recorded the resulting WebM under `docs/demo/`.
 
 ## Performance choices

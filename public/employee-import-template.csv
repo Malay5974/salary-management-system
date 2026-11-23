@@ -1,0 +1,2 @@
+firstName,lastName,email,department,country,currency,startDate,annualSalary,salaryEffectiveDate
+Alex,Example,alex.example@example.test,Engineering,US,USD,2024-01-01,95000.00,2024-01-01
