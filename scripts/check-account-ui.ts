@@ -17,6 +17,15 @@ try {
    await page.screenshot({path:`.data/account-${user.role}-${width}.png`,fullPage:true});
   }
   if(user.role==='admin' && !user.mustChangePassword){
+   await page.goto('http://localhost:3000/');
+   for(const width of [1440,390]) {
+    await page.setViewportSize({width,height:900});
+    const profile=page.getByRole('link',{name:'Profile',exact:true});const logout=page.getByRole('button',{name:'Logout',exact:true});
+    await profile.waitFor();const box=await logout.boundingBox();if(!box || box.y<650 || box.x>250)throw Error('Logout is not at sidebar bottom');
+    await page.screenshot({path:`.data/sidebar-${width}.png`});
+   }
+   await page.getByRole('link',{name:'Profile',exact:true}).click();await page.getByRole('heading',{name:'Account',exact:true}).waitFor();
+   console.log('Bottom-left Profile and Logout verified on desktop and mobile');
    const search=page.getByRole('searchbox',{name:'Search HR accounts'});
    await page.locator('.hr-row').first().waitFor();
    const firstEmail=await page.locator('.hr-row').first().innerText();

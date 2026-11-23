@@ -1,4 +1,3 @@
-import Link from 'next/link';
 import Account from '@/components/Account';
 import Dashboard from '@/components/Dashboard';
 import Login from '@/components/Login';
@@ -10,5 +9,5 @@ export default async function Home() {
   const user = await verifySession(token);
   if (!user) return <Login />;
   if (user.mustChangePassword) return <Account user={user} />;
-  return <><Link href='/account' className="workspace-account-link">Account{user.role === 'admin' ? ' / Manage HR users' : ' / Change password'}</Link><Dashboard /></>;
+  return <Dashboard user={{name:user.name,role:user.role}} />;
 }
