@@ -95,42 +95,56 @@ export default function Dashboard({
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const loadSummary = useCallback(async () => {
-    try {
-      const params = new URLSearchParams({
-        country: summaryCountry,
-        department: summaryDepartment,
-      });
-      setSummary(await api<Summary>(`/api/summary?${params}`));
-    } catch (e) {
-      setError((e as Error).message);
-    }
-  }, [summaryCountry, summaryDepartment]);
-  const loadList = useCallback(async () => {
-    setLoading(true);
-    try {
-      const params = new URLSearchParams({
-        q,
-        country,
-        department,
-        sort,
-        page: String(page),
-        pageSize: "25",
-      });
-      setList(await api<List>(`/api/employees?${params}`));
-      setError("");
-    } catch (e) {
-      setError((e as Error).message);
-    } finally {
-      setLoading(false);
-    }
-  }, [q, country, department, sort, page]);
+  const loadSummary = useCallback(
+    async (signal?: AbortSignal) => {
+      try {
+        const params = new URLSearchParams({
+          country: summaryCountry,
+          department: summaryDepartment,
+        });
+        const result = await api<Summary>(`/api/summary?${params}`, { signal });
+        if (!signal?.aborted) setSummary(result);
+      } catch (e) {
+        if (!signal?.aborted) setError((e as Error).message);
+      }
+    },
+    [summaryCountry, summaryDepartment],
+  );
+  const loadList = useCallback(
+    async (signal?: AbortSignal) => {
+      setLoading(true);
+      try {
+        const params = new URLSearchParams({
+          q,
+          country,
+          department,
+          sort,
+          page: String(page),
+          pageSize: "25",
+        });
+        const result = await api<List>(`/api/employees?${params}`, { signal });
+        if (!signal?.aborted) {
+          setList(result);
+          setError("");
+        }
+      } catch (e) {
+        if (!signal?.aborted) setError((e as Error).message);
+      } finally {
+        if (!signal?.aborted) setLoading(false);
+      }
+    },
+    [q, country, department, sort, page],
+  );
 
   useEffect(() => {
-    void loadSummary();
+    const controller = new AbortController();
+    void loadSummary(controller.signal);
+    return () => controller.abort();
   }, [loadSummary]);
   useEffect(() => {
-    if (view === "employees") void loadList();
+    const controller = new AbortController();
+    if (view === "employees") void loadList(controller.signal);
+    return () => controller.abort();
   }, [view, loadList]);
   const openEmployee = async (id: number) => {
     try {
