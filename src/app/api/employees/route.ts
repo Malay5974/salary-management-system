@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { apiError } from '@/lib/http';
-import { createEmployee, listEmployees } from '@/lib/salaries';
+import { createEmployee, listEmployees } from '@/server/employees/service';
 
 export const runtime = 'nodejs';
 

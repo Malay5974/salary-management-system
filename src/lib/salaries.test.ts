@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { employeeInput, salaryChangeInput, listInput } from './validation';
-import { summarizeRows } from './salaries';
+import { summarizeRows } from '../server/reports/summary';
 
 const employee = {
   firstName: 'Ava', lastName: 'Chen', email: 'AVA@example.test', department: 'Engineering',

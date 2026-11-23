@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { apiError } from '@/lib/http';
-import { changeSalary } from '@/lib/salaries';
+import { changeSalary } from '@/server/employees/service';
 
 export const runtime = 'nodejs';
 type Context = { params: Promise<{ id: string }> };

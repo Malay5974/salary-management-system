@@ -20,6 +20,7 @@ Requires Node.js 22 or newer and a local MySQL server.
 
    ```bash
    npm ci
+   npm run migrate
    npm run seed
    npm test
    npm run smoke
@@ -34,7 +35,7 @@ Open <http://localhost:3000>. The seed creates 10,000 deterministic synthetic em
 2. In Hostinger's **Remote MySQL** section, allow access from the Vercel app's outbound IP. If fixed outbound IPs are unavailable, Hostinger offers an **Any Host** setting; use it only with a strong unique database password and synthetic assessment data. See [Hostinger's remote MySQL instructions](https://www.hostinger.com/support/1583546-how-to-set-up-remote-mysql-access-in-hostinger/).
 3. Grant Vercel's GitHub integration access to this repository and link it to the `salary-management-system` project.
 4. Add `DATABASE_URL` to the Vercel project as an encrypted environment variable, in the form `mysql://USER:ENCODED_PASSWORD@HOST:3306/DATABASE`. Percent-encode reserved characters in the password. Do not commit this value.
-5. Deploy, then seed the Hostinger database from a trusted shell with `DATABASE_URL='...' npm run seed`. Do not put the connection string in logs or source control.
+5. Run `DATABASE_URL='...' npm run migrate` and then `DATABASE_URL='...' npm run seed` from a trusted shell, then deploy. Do not put the connection string in logs or source control.
 6. Verify the live overview shows 10,000 employees and test search, employee creation, salary update, and history.
 
 A deployed app requires `DATABASE_URL`; it never falls back to ephemeral storage. The public assessment uses synthetic records. Real salary data would require authentication, authorization, encryption, backup/restore, and an access audit.

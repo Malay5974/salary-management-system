@@ -1,5 +1,6 @@
-import { closeDatabase, getDatabase } from '../src/lib/db';
-import { changeSalary, createEmployee, getEmployee, getSummary, listEmployees } from '../src/lib/salaries';
+import { closeDatabase, getDatabase } from '../src/server/db/connection';
+import { changeSalary, createEmployee, getEmployee, listEmployees } from '../src/server/employees/service';
+import { getSummary } from '../src/server/reports/summary';
 
 const url = new URL(process.env.DATABASE_URL ?? '');
 if (!['127.0.0.1', 'localhost'].includes(url.hostname)) throw new Error('Smoke test only runs against a local database');

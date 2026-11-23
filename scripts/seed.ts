@@ -1,6 +1,8 @@
-import { closeDatabase, ensureSchema, getDatabase } from '../src/lib/db';
+import { closeDatabase, getDatabase } from '../src/server/db/connection';
+import { runMigrations } from '../src/server/db/migrations';
 
 const db = getDatabase();
+await runMigrations(db);
 const first = ['Aarav','Mia','Noah','Isha','Liam','Emma','Oliver','Sophia','Ethan','Ava','Lucas','Amelia','Leo','Isabella','Aria','James','Riya','Daniel','Fatima','Mateo'];
 const last = ['Shah','Patel','Smith','Brown','Garcia','Miller','Nguyen','Khan','Taylor','Wilson','Chen','Singh','Davis','Martin','Lee','Thomas','White','Clark','Lopez','Walker'];
 const departments = ['Engineering','Product','Design','Sales','Marketing','Finance','People','Operations'];
@@ -12,7 +14,6 @@ const locations = [
   { country: 'CA', currency: 'CAD', base: 7_000_000 }
 ];
 
-await ensureSchema(db);
 for (let start = 1; start <= 10_000; start += 250) {
   const values: unknown[] = [];
   const placeholders: string[] = [];
