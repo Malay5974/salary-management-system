@@ -6,3 +6,7 @@ node_modules/
 *.tsbuildinfo
 .vercel/
 coverage/
+
+# Personal submission notes and local workstation files
+docs/local/
+.DS_Store

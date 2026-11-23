@@ -1,40 +1,34 @@
-# Verification and review notes
+# Verification and known limits
 
-## Local checks
+## Reproducible checks
 
-- `npm test` covers identity normalization, country/currency pairing, date and salary validation, bounded pagination, currency-specific totals and medians, salary change service rules, CSV/XLSX parsing, and salted password hashing and database-backed session validation. These tests are fast and do not need a database.
-- `npm run typecheck` checks TypeScript types; `npm run build` checks the production Next.js build and routes.
-- `npm run seed` populated a local MySQL database with 10,000 synthetic records and was rerun without replacing existing changes.
-- `npm run smoke` exercised the actual local MySQL database: summary filtering, pagination, employee creation, duplicate-email rejection, salary history, rollback, import preview, audited update of an existing employee, creation of a new employee, and conflict detection. It removed its synthetic test employees afterward.
-- A headless Chromium session exercised the built app through the browser and recorded the resulting WebM under `docs/demo/`.
-- Earlier browser checks confirmed unauthenticated dashboard/API protection and login/logout for the original shared login. That evidence predates the database-account change and does not establish the full current login workflow.
+| Check | Command | Evidence |
+|---|---|---|
+| Unit tests | `npm test` | 19 tests passed: validation, currency aggregates, salary service rules, import parsing, password hashing, session revocation, and account authorization. No database required. |
+| Type checking | `npm run typecheck` | Passed. |
+| Production build | `npm run build` | Passed. |
+| SQL integration | `npm run smoke` | Passed on local MySQL: pagination/filtering, create/duplicate rejection, salary history, transaction rollback, and import preview/apply/conflict handling. Disposable records are cleaned up. |
+| Responsive UI | `node --env-file=.env.local --import tsx scripts/check-account-ui.ts` | Admin/HR pages at 1440px and 390px; search/pagination, account controls, profile navigation, and chart controls. Uses signed test sessions. |
+| Full local workflow/demo | `node --env-file=.env.local --import tsx scripts/record-demo.ts` | Passed against the built local app: real HR login, initial-password replacement, old-password rejection, HR authorization, import apply, salary history, logout, admin creation, disable/enable, and password reset/login. |
 
-## Current account and chart evidence
+See [demo instructions](demo.md) for the local server prerequisite. Browser scripts use disposable synthetic records. The admin segment uses an existing admin's signed test session, so it does not establish admin password-entry coverage. Screenshots and temporary credentials remain Git-ignored.
 
-- `npm run seed:users` created one admin and 20 HR accounts locally. Temporary passwords are private and Git-ignored. Re-running the seed preserves existing accounts.
-- Unit tests verify independent salted password hashes, incorrect-password rejection, token tampering/expiry, inactive-user rejection, and session-version revocation using a mocked database.
-- `node --env-file=.env.local --import tsx scripts/check-account-ui.ts` checks admin and HR layouts at 1440px and 390px, button styling, overflow, and browser errors. It uses database-backed signed test sessions, so it does **not** test credential entry or first-login password changes.
-- That browser script checks admin creation, disable/enable, and reset controls with a temporary HR account removed afterward; HR search, pagination, and empty results; sidebar profile navigation; chart type switching, currency selection, and country-filter currency fallback.
-- The rebuilt local application passed `scripts/record-demo.ts`: temporary-password login, mandatory replacement, old-password rejection, subsequent login, HR admin-access denial, spreadsheet apply, salary history, logout, admin creation, disabled-account login rejection, and reset-password login requiring replacement. The recorder uses disposable synthetic accounts and employees; admin controls use a signed test session.
-- The latest recorded local checks passed 19 unit tests, TypeScript checking, and a production build. This document records prior execution evidence; editing documentation does not rerun those checks.
+## Hosted evidence
 
-## Performance choices
+The application is deployed at <https://salary-management-system-ten.vercel.app> with Hostinger MariaDB 11.8.9. Migrations and seeds completed for 10,000 employees, one admin, and 20 HR accounts. Direct database queries returned 10,000 total employees, 2,000 GB employees, and 223 combined GB/employee1 search matches.
 
-- List responses use SQL `LIMIT`/`OFFSET` with a maximum page size of 100. Search, country, and department are filtered in SQL. Name and country/department indexes support common navigation. For much larger datasets, keyset pagination and a dedicated text-search index would be preferable.
-- Dashboard calculations use one 10,000-row server-side scan and return only aggregate rows to the browser. This is suitable for the assessment scale; larger organizations should use precomputed summaries or database window queries.
-- Salary updates and audit insertion run in one database transaction. `SELECT ... FOR UPDATE` locks the previous row so concurrent changes cannot record the wrong prior salary.
+Live browser automation completed initial-password replacement and subsequent login. The final automated run timed out requesting `/api/summary`, so the complete hosted workflow is **not** recorded as an automated pass. The application owner subsequently confirmed that the live app worked. Full hosted checks can be rerun with `scripts/verify-deployment.ts` using the dedicated assessment database and `VERIFY_BASE_URL`; they create and clean up temporary records.
 
-## Known boundaries
+## Performance decisions
 
-- The dedicated Hostinger MariaDB 11.8.9 database accepted the connection, migrations, 10,000-employee seed, and one-admin/20-HR seed. Local transaction integration checks used MySQL 9.6.
-- The app uses synthetic data with database-backed admin and HR accounts. SSO, email recovery, access/read auditing, backup/restore, monitoring, and retention policy are outside the implemented assessment scope.
-- Salary history displays the newest 100 changes per employee. It is an audit trail of recorded changes, not a payroll ledger or effective-date reconstruction.
-- Salary bands use numeric thresholds within each currency. Compare them only inside one currency.
+- Employee search/filtering and pagination run in SQL with a maximum page size of 100. Name, country/department, and update-time indexes support common navigation. HR account search and 10-row pagination run client-side over the small admin-only account directory.
+- Overview aggregates one server-side scan of 10,000 salary rows and returns grouped data. Precomputed summaries and keyset pagination would be appropriate at a larger scale.
+- Salary updates lock the employee and save current pay plus history in one transaction. Obsolete search/filter requests are cancelled to prevent stale results overwriting current filters.
+- No before/after latency benchmark was recorded; passing functional checks does not establish response-time targets.
 
-Account styling verification: Playwright checked admin and HR account pages at 1440px and 390px, button styling, horizontal overflow, and browser errors. Admin create, disable, enable, and password-reset controls passed using a temporary local account that was removed afterward. Re-run with `node --env-file=.env.local --import tsx scripts/check-account-ui.ts`. Screenshots are saved under ignored `.data/`.
+## Known limits
 
-Overview charts: browser checks cover Bar/Donut switching, salary currency selection, country-filter currency fallback, and mobile overflow. Charts use the existing filtered summary and respect reduced-motion preferences.
-
-## Submission hardening
-
-Authorization regression tests cover anonymous/HR/initial-password admin rejection for HR-management routes, extra-role-field rejection preventing admin creation, and initial-password gating on salary APIs. The test runner was upgraded to Vitest 4.1.12 after audit identified vulnerable development dependencies. A remaining moderate advisory is in ExcelJS's transitive uuid dependency; no forced ExcelJS downgrade was applied because it would change the import stack. Review this dependency before real-data use.
+- Synthetic assessment data only. SSO, email recovery, read/access auditing, backup/restore procedures, monitoring, and retention controls are outside the implemented scope. Salary history does not identify the acting HR user.
+- Employee history returns the newest 100 events and is not an effective-date payroll ledger. Salary bands are compared within one currency; totals never combine currencies.
+- The test runner was patched to Vitest 4.1.12. The dependency audit still reports a moderate advisory in ExcelJS's transitive uuid dependency; a forced import-library downgrade was not applied.
+- Production uses application login; Vercel Authentication protects previews. The source was uploaded directly to Vercel. GitHub automatic deployment is not connected, so pushing a commit alone does not deploy it.
