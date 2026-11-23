@@ -27,10 +27,10 @@ export async function listEmployeeRows(db: Database, filter: ListFilter) {
   return { items, total: Number(counts[0].count) };
 }
 
-export async function findEmployee(db: Database, id: number) {
+export async function findEmployee(db: Database, id: number): Promise<EmployeeRow | null> {
   return (await db.query<EmployeeRow>(`SELECT ${employeeColumns} FROM employees WHERE id = ?`, [id]))[0] ?? null;
 }
-export async function findEmployeeByEmail(db: Database, email: string) {
+export async function findEmployeeByEmail(db: Database, email: string): Promise<EmployeeRow | null> {
   return (await db.query<EmployeeRow>(`SELECT ${employeeColumns} FROM employees WHERE email = ?`, [email]))[0] ?? null;
 }
 export async function findSalaryHistory(db: Database, id: number) {
@@ -46,7 +46,7 @@ export async function insertEmployee(db: Database, employee: NewEmployee) {
     employee.country, employee.currency, employee.startDate, employee.salaryMinor, employee.salaryEffectiveDate]);
   return result.insertId;
 }
-export async function lockEmployee(db: Database, id: number) {
+export async function lockEmployee(db: Database, id: number): Promise<EmployeeRow | null> {
   return (await db.query<EmployeeRow>(`SELECT ${employeeColumns} FROM employees WHERE id = ? FOR UPDATE`, [id]))[0] ?? null;
 }
 export async function updateSalary(db: Database, id: number, salaryMinor: number, effectiveDate: string) {

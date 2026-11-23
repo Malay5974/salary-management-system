@@ -1,6 +1,6 @@
 import type { Database } from '../db/connection';
 import { getDatabase } from '../db/connection';
-import { employeeInput, listInput, salaryChangeInput } from '@/lib/validation';
+import { employeeInput, listInput, salaryChangeInput } from '../../lib/validation';
 import { z } from 'zod';
 import { findEmployee, findSalaryHistory, insertEmployee, insertSalaryHistory, listEmployeeRows, lockEmployee, updateSalary, type EmployeeRow, type HistoryRow } from './repository';
 
